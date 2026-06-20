@@ -1,0 +1,21 @@
+# Validation config (research/05). Matches frameflow.config.ValidateConfig.
+#
+# CODE-REVIEW CORRECTION P1: ALL full-reference metrics use the FIXED physical Kelvin range
+# below. NEVER per-image min/max (hides radiometric warm/cold-bias & contrast errors).
+bt_data_range_k: 140.0       # = bt_vmax_k - bt_vmin_k
+bt_vmin_k: 180.0
+bt_vmax_k: 320.0
+use_per_image_minmax: false  # MUST stay false (P1) — regression guard
+
+# Headline metric set (research/05 §0).
+metrics: [psnr, ssim, ms_ssim, fsim, bt_rmse_k, csi_235k, fss, epe]
+
+# Cold-cloud BT thresholds (K) for categorical skill (CSI/POD/FAR/FSS) (research/05 §3).
+bt_thresholds_k: [235.0, 220.0, 210.0, 200.0]
+fss_scales_px: [1, 3, 9, 27, 81]
+
+# Which of the 40 cross-validation methods to run (research/05 §4); [] == headline subset.
+crossval_methods: []
+bootstrap_n: 1000
+dual_impl_check: true        # M40: compute key metrics with two libs and assert agreement
+out_dir: out/validation

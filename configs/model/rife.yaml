@@ -1,0 +1,9 @@
+# RIFE / Practical-RIFE (IFNet) — the PRIMARY VFI engine (research/01 §0, §9).
+# MIT-licensed, ~10M params, native arbitrary-t, internal flow estimation.
+name: rife
+variant: v4.25
+pretrained: ""                # path/URL to Practical-RIFE v4.x weights for transfer learning
+in_channels: 1                # single-channel brightness temperature
+channel_adapt: replicate3     # reuse RGB weights verbatim; ablate vs avg_conv1
+arbitrary_t: true             # 00:05/00:10/00:15 (t=0.25/0.5/0.75) come for free
+params_m: 9.8

@@ -1,0 +1,26 @@
+# Serving / precompute config (research/03 §6, research/04, research/06 §3).
+# Matches frameflow.config.ServeConfig. The O(1) path: precompute static tiles/video/manifest.
+tile_size: 256
+min_zoom: 0
+max_zoom: 8
+tile_format: webp
+colormap: ir_clouds
+
+# CODE-REVIEW CORRECTION P2: per-frame tile sources. A single raster PMTiles archive is
+# addressed only by z/x/y and cannot select a timestamp, so EACH frame gets its OWN XYZ
+# pyramid and PMTiles archive; the timeline slider switches the active frame's source.
+# `{index:03d}` is filled per frame, leaving `{z}/{x}/{y}` for the map client (note the
+# doubled braces so .format(index=..) keeps the XYZ placeholders intact).
+tiles_url_template: "tiles/{index:03d}/{{z}}/{{x}}/{{y}}.webp"
+pmtiles_template: "pmtiles/{index:03d}.pmtiles"
+
+make_video: true
+video_fps: 12
+out_dir: out/web
+manifest_name: manifest.json
+
+# Optional on-demand endpoint (research/06 §2, §3.4).
+serve_host: 0.0.0.0
+serve_port: 8000
+redis_url: redis://localhost:6379/0
+triton: false

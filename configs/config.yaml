@@ -1,0 +1,16 @@
+# FrameFlow root Hydra config.
+# Compose stage configs via the defaults list; override on the CLI, e.g.
+#   python -m frameflow.cli train data=goes19 model=ifrnet train=finetune
+#
+# Each group below maps to a dataclass in frameflow.config and a subdir under configs/.
+defaults:
+  - data: synthetic
+  - model: rife
+  - train: finetune
+  - infer: default
+  - validate: full
+  - serve: precompute
+  - _self_
+
+project: FrameFlow
+seed: 42
