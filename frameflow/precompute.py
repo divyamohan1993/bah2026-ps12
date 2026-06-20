@@ -28,10 +28,11 @@ heavy deps (numpy/xarray/PIL/imageio) are imported lazily inside functions.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence
+from typing import TYPE_CHECKING, Any
 
 from . import constants as C
 from .config import ServeConfig
@@ -70,7 +71,7 @@ class PrecomputeResult:
 # ===========================================================================
 # Cube loading
 # ===========================================================================
-def _load_cube(cube_path: str | Path) -> tuple["np.ndarray", list[str], tuple[float, float, float, float], dict[str, Any]]:
+def _load_cube(cube_path: str | Path) -> tuple[np.ndarray, list[str], tuple[float, float, float, float], dict[str, Any]]:
     """Load a Zarr cube -> (bt[T,H,W] float32, iso_times[T], bbox, attrs).
 
     Returns ISO-8601 'Z' timestamp strings and a ``[west, south, east, north]`` bbox derived
@@ -133,7 +134,7 @@ def _bbox_from_ds(ds: Any) -> tuple[float, float, float, float]:
 # ===========================================================================
 # Interpolation (recursive densification)
 # ===========================================================================
-def _runner_from_model(model: Any) -> Optional[ModelRunner]:
+def _runner_from_model(model: Any) -> ModelRunner | None:
     """Wrap an injected model as a ``(I0,I1,t)->It`` runner, or return None for no model.
 
     Accepts a torch-style ``VFIModel`` (``forward(I0,I1,t)`` with ``(B,1,H,W)`` and ``t``
@@ -157,13 +158,19 @@ def _runner_from_model(model: Any) -> Optional[ModelRunner]:
             x1 = torch.as_tensor(np.asarray(i1, dtype=np.float32))[None, None]
             tt = torch.as_tensor([[float(t)]], dtype=torch.float32)  # (B,1) leading batch dim
             out = forward(x0, x1, tt)
+            # MODELS registry returns a dict ({"pred",...}); forward_with_flow returns a
+            # (It, flow) tuple; dummies may return a bare tensor — accept all three.
+            if isinstance(out, dict):
+                out = out.get("pred", out.get("It"))
+            elif isinstance(out, (tuple, list)):
+                out = out[0]
             out = out.detach().cpu().numpy()
         return np.squeeze(out).astype(np.float32)
 
     return _run
 
 
-def _linear_blend(i0: "np.ndarray", i1: "np.ndarray", t: float) -> "np.ndarray":
+def _linear_blend(i0: np.ndarray, i1: np.ndarray, t: float) -> np.ndarray:
     """NaN-aware linear blend baseline used when no model/infer is available for densifying."""
     import numpy as np
 
@@ -179,10 +186,10 @@ def _linear_blend(i0: "np.ndarray", i1: "np.ndarray", t: float) -> "np.ndarray":
 
 
 def _densify(
-    observed: Sequence["np.ndarray"],
+    observed: Sequence[np.ndarray],
     factor: int,
-    runner: Optional[ModelRunner],
-) -> tuple[list["np.ndarray"], list[dict[str, Any]]]:
+    runner: ModelRunner | None,
+) -> tuple[list[np.ndarray], list[dict[str, Any]]]:
     """Recursively densify an observed sequence by ``factor`` (power-of-two midpoints).
 
     For ``factor`` = 2 one frame is inserted between each consecutive observed pair; ``factor``
@@ -227,7 +234,95 @@ def _densify(
     return frames, meta
 
 
-def _try_infer_sequence(cube_path: str | Path, factor: int, out_nc_dir: Path) -> Optional[list[Path]]:
+def _model_flow(model: Any, i0: np.ndarray, i1: np.ndarray, t: float) -> np.ndarray | None:
+    """Return a dense ``(2, H, W)`` intermediate flow from a model, or ``None``.
+
+    Tries the dict-output contract (``forward(...)["flow"]``, IFNet returns ``(B,4,H,W)``
+    bidirectional flow → we take the first two channels, ``F_{t->0}``) and the
+    ``forward_with_flow`` API. Any failure (no flow, non-torch model) yields ``None`` so the
+    overlay step degrades gracefully.
+    """
+    import numpy as np
+
+    try:
+        import torch
+    except Exception:
+        return None
+    forward = getattr(model, "forward", None)
+    if forward is None:
+        return None
+    try:
+        with torch.no_grad():
+            x0 = torch.as_tensor(np.asarray(i0, dtype=np.float32))[None, None]
+            x1 = torch.as_tensor(np.asarray(i1, dtype=np.float32))[None, None]
+            tt = torch.as_tensor([[float(t)]], dtype=torch.float32)
+            flow = None
+            fwf = getattr(model, "forward_with_flow", None)
+            if callable(fwf):
+                _it, flow = fwf(x0, x1, tt)
+            else:
+                out = forward(x0, x1, tt)
+                if isinstance(out, dict):
+                    flow = out.get("flow")
+            if flow is None:
+                return None
+            f = np.asarray(flow.detach().cpu().numpy(), dtype=np.float32)
+    except Exception:
+        return None
+    # Collapse batch dim and keep the first two channels (F_{t->0}: u, v).
+    while f.ndim > 3:
+        f = f[0]
+    if f.ndim != 3 or f.shape[0] < 2:
+        return None
+    return f[:2]
+
+
+def _maybe_flow_overlays(
+    model: Any,
+    observed: Sequence[np.ndarray],
+    meta: Sequence[dict[str, Any]],
+    frames_meta: list[dict[str, Any]],
+    bbox: tuple[float, float, float, float],
+    out_dir: Path,
+    *,
+    step: int = 16,
+) -> int:
+    """Save a deck.gl flow overlay for each interpolated frame whose model exposes flow.
+
+    Updates ``frames_meta[idx]["flow_overlay"]`` in place with the written relative path
+    (``flow/NNN.json``). Returns the number of overlays written. No-ops (returns 0) when the
+    model can't produce flow, keeping observed-only / baseline runs clean.
+    """
+    if model is None:
+        return 0
+    written = 0
+    for idx, mt in enumerate(meta):
+        if mt.get("kind") != "interpolated":
+            continue
+        bracket = mt.get("bracket")
+        if not bracket or len(bracket) != 2:
+            continue
+        i, j = int(bracket[0]), int(bracket[1])
+        if i >= len(observed) or j >= len(observed):
+            continue
+        flow = _model_flow(model, observed[i], observed[j], float(mt.get("t") or 0.5))
+        if flow is None:
+            continue
+        try:
+            rel = flow_overlay_mod.save_flow_overlay(
+                flow, step=step, bbox=list(bbox), out_dir=out_dir, frame_index=idx
+            )
+        except Exception as exc:  # pragma: no cover - overlay must never fail the build
+            logger.warning("precompute: flow overlay for frame %d skipped (%s)", idx, exc)
+            continue
+        frames_meta[idx]["flow_overlay"] = rel
+        written += 1
+    if written:
+        logger.info("precompute: wrote %d flow overlay(s)", written)
+    return written
+
+
+def _try_infer_sequence(cube_path: str | Path, factor: int, out_nc_dir: Path) -> list[Path] | None:
     """Try Team INFER's ``interpolate_sequence`` to densify the cube; None if unavailable."""
     try:  # pragma: no cover - depends on Team INFER landing
         from .infer import interpolate as inf  # type: ignore
@@ -246,7 +341,7 @@ def _try_infer_sequence(cube_path: str | Path, factor: int, out_nc_dir: Path) ->
 # NetCDF per-frame writing
 # ===========================================================================
 def _write_frame_nc(
-    frame: "np.ndarray",
+    frame: np.ndarray,
     iso_time: str,
     bbox: tuple[float, float, float, float],
     out_path: Path,
@@ -313,9 +408,9 @@ def _write_frame_nc(
 # Metrics (optional, via Team VALIDATE)
 # ===========================================================================
 def _compute_metrics(
-    frames: Sequence["np.ndarray"],
+    frames: Sequence[np.ndarray],
     meta: Sequence[dict[str, Any]],
-    observed: Sequence["np.ndarray"],
+    observed: Sequence[np.ndarray],
     iso_times: Sequence[str],
 ) -> dict[str, Any]:
     """Per-frame metrics for interpolated frames vs withheld truth (fixed-K data_range, P1).
@@ -333,7 +428,7 @@ def _compute_metrics(
 
     validate_fn = _maybe_validate_metric_fn()
 
-    for idx, (fr, mt) in enumerate(zip(frames, meta)):
+    for idx, (fr, mt) in enumerate(zip(frames, meta, strict=False)):
         if mt["kind"] != "interpolated" or mt.get("bracket") is None:
             continue
         i, j = mt["bracket"]
@@ -364,7 +459,7 @@ def _compute_metrics(
     }
 
 
-def _maybe_validate_metric_fn() -> Optional[Callable[..., Any]]:
+def _maybe_validate_metric_fn() -> Callable[..., Any] | None:
     """Return ``frameflow.validate.metrics.per_frame_metrics`` if importable, else None."""
     try:  # pragma: no cover - depends on Team VALIDATE landing
         from .validate import metrics as vmetrics  # type: ignore
@@ -375,9 +470,9 @@ def _maybe_validate_metric_fn() -> Optional[Callable[..., Any]]:
 
 
 def _builtin_metrics(
-    pred: "np.ndarray",
-    ref: "np.ndarray",
-    mask: "np.ndarray",
+    pred: np.ndarray,
+    ref: np.ndarray,
+    mask: np.ndarray,
     idx: int,
     iso_times: Sequence[str],
     data_range_k: float,
@@ -503,7 +598,7 @@ def precompute_scene(
     (out_dir / "nc").mkdir(parents=True, exist_ok=True)
 
     frames_meta: list[dict[str, Any]] = []
-    for idx, (fr, mt) in enumerate(zip(frames, meta)):
+    for idx, (fr, mt) in enumerate(zip(frames, meta, strict=False)):
         img_rel = f"img/{idx:03d}.{cfg.tile_format}"
         thumb_rel = f"thumb/{idx:03d}.{cfg.tile_format}"
         nc_rel = f"nc/{idx:03d}.nc"
@@ -549,6 +644,9 @@ def precompute_scene(
 
     # use the per-frame max zoom from the (uniform) last tile build for the manifest.
     max_zoom = int(tile_info["max_zoom"]) if n_frames else cfg.max_zoom
+
+    # 6b) Flow overlays for interpolated frames (when the model exposes intermediate flow).
+    _maybe_flow_overlays(model, observed, meta, frames_meta, bbox, out_dir)
 
     # 7) Videos (all-intra). Observed = real frames; interpolated = full densified track.
     videos: dict[str, str | None] = {"observed": None, "interpolated": None, "side_by_side": None}
@@ -633,12 +731,11 @@ def _build_frame_times(
     Observed frames keep their cube timestamp; interpolated frames are placed at the
     fractional time ``t`` between their bracket's observed timestamps.
     """
-    import numpy as np
     import pandas as pd
 
     obs_ts = [pd.Timestamp(s.replace("Z", "")) for s in obs_times]
 
-    def _fmt(ts: "pd.Timestamp") -> str:
+    def _fmt(ts: pd.Timestamp) -> str:
         return ts.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     out: list[str] = []
@@ -662,15 +759,15 @@ def _build_frame_times(
 
 
 def _stretch_observed(
-    observed: Sequence["np.ndarray"],
+    observed: Sequence[np.ndarray],
     meta: Sequence[dict[str, Any]],
-) -> list["np.ndarray"]:
+) -> list[np.ndarray]:
     """Repeat each observed frame across its sub-interval so it aligns 1:1 with densified frames.
 
     Used for the side-by-side video so the left (observed/native-cadence) pane and the right
     (interpolated) pane have the same frame count and step together.
     """
-    out: list["np.ndarray"] = []
+    out: list[np.ndarray] = []
     obs_cursor = -1
     for m in meta:
         if m["kind"] == "observed":
@@ -680,9 +777,9 @@ def _stretch_observed(
 
 
 def _maybe_crossval(
-    frames: Sequence["np.ndarray"],
+    frames: Sequence[np.ndarray],
     meta: Sequence[dict[str, Any]],
-    observed: Sequence["np.ndarray"],
+    observed: Sequence[np.ndarray],
 ) -> list[dict[str, Any]]:
     """Return a crossval ``methods_run`` list via Team VALIDATE if available, else a default.
 

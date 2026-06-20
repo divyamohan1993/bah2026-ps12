@@ -43,6 +43,8 @@ if TYPE_CHECKING:  # typing only
     import numpy as np
     import torch
 
+    from ..contracts import MetricRecord
+
 
 __all__ = [
     "to_unit_interval",
@@ -74,7 +76,7 @@ def to_unit_interval(
     vmin_k: float = C.BT_METRIC_VMIN_K,
     vmax_k: float = C.BT_METRIC_VMAX_K,
     clip: bool = True,
-) -> "np.ndarray":
+) -> np.ndarray:
     r"""Scale a Kelvin brightness-temperature array to ``[0, 1]`` with the FIXED span (P1).
 
     ``x' = (BT - vmin_k) / (vmax_k - vmin_k)`` using the **fixed, shared** physical bounds
@@ -111,7 +113,7 @@ def from_unit_interval(
     *,
     vmin_k: float = C.BT_METRIC_VMIN_K,
     vmax_k: float = C.BT_METRIC_VMAX_K,
-) -> "np.ndarray":
+) -> np.ndarray:
     """Inverse of :func:`to_unit_interval`: map ``[0,1]`` back to Kelvin via the FIXED span."""
     import numpy as np  # lazy
 
@@ -119,7 +121,7 @@ def from_unit_interval(
     return (np.asarray(x, dtype=np.float32) * span + float(vmin_k)).astype(np.float32)
 
 
-def _as_nchw(x01: "np.ndarray") -> "torch.Tensor":
+def _as_nchw(x01: np.ndarray) -> torch.Tensor:
     """Wrap a 2D ``[0,1]`` array as a ``(1, 1, H, W)`` float32 CPU tensor for piq."""
     import numpy as np  # lazy
     import torch  # lazy
@@ -128,7 +130,7 @@ def _as_nchw(x01: "np.ndarray") -> "torch.Tensor":
     return torch.from_numpy(a[np.newaxis, np.newaxis, :, :]).float()
 
 
-def _ms_ssim_scales_for(h: int, w: int) -> tuple[int, "torch.Tensor", int] | None:
+def _ms_ssim_scales_for(h: int, w: int) -> tuple[int, torch.Tensor, int] | None:
     """Choose (kernel_size, scale_weights, n_scales) so MS-SSIM is valid for an ``H x W`` image.
 
     piq's MS-SSIM needs each successive 2x-downsampled level to remain larger than the
@@ -169,14 +171,13 @@ def _ms_ssim_scales_for(h: int, w: int) -> tuple[int, "torch.Tensor", int] | Non
     return kernel, weights, n_scales
 
 
-def _safe_ms_ssim(p01: "np.ndarray", t01: "np.ndarray") -> float:
+def _safe_ms_ssim(p01: np.ndarray, t01: np.ndarray) -> float:
     """MS-SSIM on fixed-[0,1] arrays, adapting the scale count to the image size.
 
     Falls back to single-scale SSIM if the image is too small for any multi-scale pyramid,
     and returns ``nan`` only if even that is impossible. Never raises.
     """
     import piq  # lazy
-    import torch  # lazy
 
     h, w = p01.shape[-2:]
     cfg = _ms_ssim_scales_for(h, w)
@@ -203,7 +204,7 @@ def _safe_ms_ssim(p01: "np.ndarray", t01: "np.ndarray") -> float:
             return float("nan")
 
 
-def _safe_ssim(p01: "np.ndarray", t01: "np.ndarray") -> float:
+def _safe_ssim(p01: np.ndarray, t01: np.ndarray) -> float:
     """Single-scale SSIM on fixed-[0,1] arrays with a kernel that fits the image."""
     import piq  # lazy
 
@@ -220,7 +221,7 @@ def _safe_ssim(p01: "np.ndarray", t01: "np.ndarray") -> float:
         return float("nan")
 
 
-def _safe_fsim(p01: "np.ndarray", t01: "np.ndarray") -> float:
+def _safe_fsim(p01: np.ndarray, t01: np.ndarray) -> float:
     """FSIM on fixed-[0,1] arrays (replicate single channel to 3 — piq FSIM expects RGB)."""
     import piq  # lazy
 
@@ -232,7 +233,7 @@ def _safe_fsim(p01: "np.ndarray", t01: "np.ndarray") -> float:
         return float("nan")
 
 
-def _safe_gmsd(p01: "np.ndarray", t01: "np.ndarray") -> float:
+def _safe_gmsd(p01: np.ndarray, t01: np.ndarray) -> float:
     """GMSD on fixed-[0,1] arrays (lower is better; 0 == identical)."""
     import piq  # lazy
 
@@ -349,7 +350,7 @@ def per_frame_metrics(
     mask: Any | None = None,
     index: int = 0,
     time: str | None = None,
-) -> "MetricRecord":
+) -> MetricRecord:
     """Compute the full-reference + BT-domain metrics for ONE frame (CONTRACTS §6.3).
 
     Thin wrapper over :func:`compute_metrics` that returns a

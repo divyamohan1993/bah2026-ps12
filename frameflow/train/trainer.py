@@ -19,7 +19,6 @@ from typing import Any
 from .. import config as _config
 from .cli import run_training
 
-
 __all__ = ["run"]
 
 

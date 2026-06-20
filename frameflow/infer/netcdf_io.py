@@ -33,7 +33,7 @@ if TYPE_CHECKING:  # typing only — never imported at runtime
 __all__ = ["write_netcdf", "read_netcdf"]
 
 
-def _coerce_2d_or_3d(bt: Any) -> "np.ndarray":
+def _coerce_2d_or_3d(bt: Any) -> np.ndarray:
     """Return ``bt`` as a float32 ``(time, y, x)`` array (adds a leading time axis if 2D).
 
     Accepts a 2D ``(y, x)`` frame (the common single-instant case) or an already-3D
@@ -52,7 +52,7 @@ def _coerce_2d_or_3d(bt: Any) -> "np.ndarray":
     return arr
 
 
-def _as_datetime64(time: Any, n_t: int) -> "np.ndarray":
+def _as_datetime64(time: Any, n_t: int) -> np.ndarray:
     """Coerce ``time`` to a ``datetime64[ns]`` array of length ``n_t``.
 
     Accepts a scalar (ISO string / ``datetime`` / ``np.datetime64``) — broadcast to length
@@ -97,7 +97,7 @@ def _coords_from_grid_or_arrays(
     lon: Any,
     n_rows: int,
     n_cols: int,
-) -> tuple["np.ndarray", "np.ndarray"]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Resolve 1-D ``lat`` (len ``n_rows``) and ``lon`` (len ``n_cols``) coordinate arrays.
 
     ``lat`` / ``lon`` may be 1-D coordinate vectors, or 2-D meshgrids (the first column /
@@ -231,7 +231,7 @@ def write_netcdf(
         ) from (last_err or exc)
 
 
-def read_netcdf(path: str | Path) -> "xr.Dataset":
+def read_netcdf(path: str | Path) -> xr.Dataset:
     """Read an interpolated/observed ``.nc`` frame into an :class:`xarray.Dataset`.
 
     The returned dataset is fully loaded into memory (``.load()``) so the file handle is

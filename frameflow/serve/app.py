@@ -14,7 +14,7 @@ from typing import Any
 from .api import create_app
 
 
-def build_app(artifacts: str | Path = "artifacts", **kwargs: Any) -> "Any":
+def build_app(artifacts: str | Path = "artifacts", **kwargs: Any) -> Any:
     """Build the FastAPI app and mount ``artifacts`` as static files at ``/artifacts``.
 
     Args:

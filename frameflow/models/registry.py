@@ -59,14 +59,14 @@ class VFIModel(Protocol):
     """
 
     def forward(
-        self, I0: "torch.Tensor", I1: "torch.Tensor", t: "torch.Tensor | float"
-    ) -> dict[str, "torch.Tensor"]:
+        self, I0: torch.Tensor, I1: torch.Tensor, t: torch.Tensor | float
+    ) -> dict[str, torch.Tensor]:
         """Interpolate the frame at fraction ``t``; return a dict with key ``"pred"``."""
         ...
 
     def __call__(
-        self, I0: "torch.Tensor", I1: "torch.Tensor", t: "torch.Tensor | float"
-    ) -> dict[str, "torch.Tensor"]:
+        self, I0: torch.Tensor, I1: torch.Tensor, t: torch.Tensor | float
+    ) -> dict[str, torch.Tensor]:
         """Callable form, equivalent to :meth:`forward`."""
         ...
 
@@ -97,7 +97,7 @@ class ClassicalBaseline:
     # not an nn.Module, but mirror its trivial attributes for uniformity
     params_m: float = 0.0
 
-    def _scalar_t(self, t: "torch.Tensor | float", i: int, batch: int) -> float:
+    def _scalar_t(self, t: torch.Tensor | float, i: int, batch: int) -> float:
         """Read the scalar timestep for batch element ``i`` from a float or ``(B,1)`` tensor."""
         if isinstance(t, (float, int)):
             return float(t)
@@ -110,8 +110,8 @@ class ClassicalBaseline:
         return float(tt[0].item())
 
     def forward(
-        self, I0: "torch.Tensor", I1: "torch.Tensor", t: "torch.Tensor | float" = 0.5
-    ) -> dict[str, "torch.Tensor"]:
+        self, I0: torch.Tensor, I1: torch.Tensor, t: torch.Tensor | float = 0.5
+    ) -> dict[str, torch.Tensor]:
         """Interpolate per batch element with the classical method; return ``{"pred": ...}``.
 
         Args:
@@ -142,8 +142,8 @@ class ClassicalBaseline:
         return {"pred": pred}
 
     def __call__(
-        self, I0: "torch.Tensor", I1: "torch.Tensor", t: "torch.Tensor | float" = 0.5
-    ) -> dict[str, "torch.Tensor"]:
+        self, I0: torch.Tensor, I1: torch.Tensor, t: torch.Tensor | float = 0.5
+    ) -> dict[str, torch.Tensor]:
         return self.forward(I0, I1, t)
 
     def __repr__(self) -> str:

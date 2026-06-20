@@ -19,14 +19,13 @@ module is precision-agnostic. See :mod:`frameflow.train.cli` / :mod:`frameflow.t
 
 from __future__ import annotations
 
-import math
 from typing import TYPE_CHECKING, Any
 
 import pytorch_lightning as pl
 import torch
 
-from .. import constants as C
 from .. import config as _config
+from .. import constants as C
 from .losses import CombinedLoss
 
 if TYPE_CHECKING:  # type-checkers only
@@ -59,7 +58,7 @@ class _TinyBlendModel(torch.nn.Module):
         torch.nn.init.zeros_(self.refine.weight)
         torch.nn.init.zeros_(self.refine.bias)
 
-    def forward(self, I0: "Tensor", I1: "Tensor", t: "Tensor") -> "Tensor":
+    def forward(self, I0: Tensor, I1: Tensor, t: Tensor) -> Tensor:
         # t: (B, 1) -> (B, 1, 1, 1) for broadcasting against (B, C, H, W).
         tt = t.view(t.shape[0], 1, 1, 1).to(I0.dtype)
         blend = (1.0 - tt) * I0 + tt * I1
@@ -101,7 +100,7 @@ class VFIModule(pl.LightningModule):
         model: torch.nn.Module | None = None,
         *,
         model_name: str = "ifnet",
-        loss_weights: "_config.TrainConfig | dict[str, float] | None" = None,
+        loss_weights: _config.TrainConfig | dict[str, float] | None = None,
         lr: float = 2e-4,
         lr_min: float = 1e-5,
         weight_decay: float = 1e-4,
@@ -166,10 +165,10 @@ class VFIModule(pl.LightningModule):
     @classmethod
     def from_config(
         cls,
-        cfg: "_config.FrameFlowConfig",
+        cfg: _config.FrameFlowConfig,
         *,
         model: torch.nn.Module | None = None,
-    ) -> "VFIModule":
+    ) -> VFIModule:
         """Build a :class:`VFIModule` from a composed :class:`frameflow.config.FrameFlowConfig`.
 
         Pulls LR/schedule/loss-weight/precision-independent settings from ``cfg.train`` and
@@ -228,7 +227,7 @@ class VFIModule(pl.LightningModule):
             )
 
     @staticmethod
-    def _extract_state_dict(ckpt: Any) -> dict[str, "Tensor"]:
+    def _extract_state_dict(ckpt: Any) -> dict[str, Tensor]:
         """Normalize the many checkpoint container shapes into a backbone ``state_dict``."""
         if isinstance(ckpt, dict):
             for key in ("state_dict", "model", "net", "params", "weights"):
@@ -263,7 +262,7 @@ class VFIModule(pl.LightningModule):
         print(f"[VFIModule] froze {n_frozen} parameter tensors matching {prefixes}.")
 
     # ------------------------------------------------------------------ forward / batch
-    def forward(self, I0: "Tensor", I1: "Tensor", t: "Tensor") -> "Tensor":
+    def forward(self, I0: Tensor, I1: Tensor, t: Tensor) -> Tensor:
         """Forward through the backbone: ``(I0, I1, t) -> It`` with ``t`` shape ``(B, 1)``.
 
         The backbone's raw output is normalized to the predicted-frame tensor: the MODELS
@@ -275,7 +274,7 @@ class VFIModule(pl.LightningModule):
         return self._extract_pred(self.model(I0, I1, t))
 
     @staticmethod
-    def _extract_pred(out: Any) -> "Tensor":
+    def _extract_pred(out: Any) -> Tensor:
         """Normalize a backbone output into the predicted-frame tensor.
 
         Accepts a bare tensor, a ``dict`` carrying the prediction under one of the common
@@ -304,7 +303,7 @@ class VFIModule(pl.LightningModule):
             return out[0]
         raise TypeError(f"could not extract a prediction tensor from backbone output {type(out)!r}")
 
-    def _unpack_batch(self, batch: Any) -> tuple["Tensor", "Tensor", "Tensor", "Tensor"]:
+    def _unpack_batch(self, batch: Any) -> tuple[Tensor, Tensor, Tensor, Tensor]:
         """Extract ``(I0, I1, It, t)`` tensors from a Sample-style batch.
 
         Supports the :class:`frameflow.contracts.Sample` dict layout (keys ``I0``/``I1``/
@@ -334,14 +333,14 @@ class VFIModule(pl.LightningModule):
             t = t.reshape(t.shape[0], -1)[:, :1]
         return I0, I1, It, t
 
-    def _as_float(self, x: Any) -> "Tensor":
+    def _as_float(self, x: Any) -> Tensor:
         """Coerce an array/tensor to a float tensor on the module's device."""
         if not torch.is_tensor(x):
             x = torch.as_tensor(x)
         return x.to(device=self.device, dtype=torch.float32) if x.dtype != torch.float32 else x.to(self.device)
 
     # ------------------------------------------------------------------ training
-    def training_step(self, batch: Any, batch_idx: int) -> "Tensor":
+    def training_step(self, batch: Any, batch_idx: int) -> Tensor:
         """One optimization step: forward, combined loss, log components, return loss."""
         I0, I1, It, t = self._unpack_batch(batch)
         pred = self(I0, I1, t)
@@ -354,7 +353,7 @@ class VFIModule(pl.LightningModule):
         return loss
 
     # ------------------------------------------------------------------ validation
-    def validation_step(self, batch: Any, batch_idx: int) -> dict[str, "Tensor"]:
+    def validation_step(self, batch: Any, batch_idx: int) -> dict[str, Tensor]:
         """Compute val loss + PSNR/SSIM in FIXED-range Kelvin (P1)."""
         I0, I1, It, t = self._unpack_batch(batch)
         pred = self(I0, I1, t)
@@ -375,7 +374,7 @@ class VFIModule(pl.LightningModule):
         self.log("val_ssim", ssim, on_epoch=True, prog_bar=True, batch_size=bs)
         return {"val_loss": loss, "val_psnr": psnr, "val_ssim": ssim}
 
-    def _to_kelvin(self, x: "Tensor") -> "Tensor":
+    def _to_kelvin(self, x: Tensor) -> Tensor:
         """Map a model-space tensor to physical Kelvin for metric computation.
 
         If the pipeline uses normalized ``[0, 1]`` I/O, invert the fixed-range normalization
@@ -386,7 +385,7 @@ class VFIModule(pl.LightningModule):
         span = self.bt_vmax_k - self.bt_vmin_k
         return self.bt_vmin_k + x * span
 
-    def _fixed_range_psnr_ssim(self, pred_k: "Tensor", gt_k: "Tensor") -> tuple["Tensor", "Tensor"]:
+    def _fixed_range_psnr_ssim(self, pred_k: Tensor, gt_k: Tensor) -> tuple[Tensor, Tensor]:
         """PSNR & SSIM in Kelvin using the FIXED shared ``data_range`` (P1).
 
         Prefers the VALIDATE team's :func:`frameflow.validate.metrics.per_frame_metrics`
@@ -413,7 +412,7 @@ class VFIModule(pl.LightningModule):
         return psnr, ssim
 
     def _metrics_via_validate(
-        self, pred_k: "Tensor", gt_k: "Tensor", dr: float
+        self, pred_k: Tensor, gt_k: Tensor, dr: float
     ) -> tuple[float | None, float | None]:
         """Average PSNR/SSIM over the batch via the VALIDATE per-frame metric (fixed-range)."""
         import numpy as np  # lazy
@@ -440,7 +439,7 @@ class VFIModule(pl.LightningModule):
         return float(np.mean(psnrs)), float(np.mean(ssims))
 
     @staticmethod
-    def _psnr_fixed_range(pred: "Tensor", gt: "Tensor", *, data_range: float) -> "Tensor":
+    def _psnr_fixed_range(pred: Tensor, gt: Tensor, *, data_range: float) -> Tensor:
         r"""PSNR with a FIXED peak ``data_range`` (P1): ``10*log10(R^2 / MSE)``.
 
         The peak ``R`` is the fixed physical Kelvin span, NOT each frame's own extremes, so a
@@ -454,8 +453,8 @@ class VFIModule(pl.LightningModule):
 
     @staticmethod
     def _ssim_fixed_range(
-        pred: "Tensor", gt: "Tensor", *, data_range: float, band_floor: float
-    ) -> "Tensor":
+        pred: Tensor, gt: Tensor, *, data_range: float, band_floor: float
+    ) -> Tensor:
         r"""SSIM with a FIXED ``data_range`` (P1), via piq when usable, else a Gaussian SSIM.
 
         ``piq.ssim`` asserts inputs lie within ``[0, data_range]``, so we shift the Kelvin
@@ -487,7 +486,7 @@ class VFIModule(pl.LightningModule):
             return VFIModule._gaussian_ssim(p, g, data_range=float(data_range))
 
     @staticmethod
-    def _gaussian_ssim(pred: "Tensor", gt: "Tensor", *, data_range: float, window: int = 11, sigma: float = 1.5) -> "Tensor":
+    def _gaussian_ssim(pred: Tensor, gt: Tensor, *, data_range: float, window: int = 11, sigma: float = 1.5) -> Tensor:
         """Inline single-scale Gaussian SSIM with a FIXED ``data_range`` (fallback path)."""
         import torch.nn.functional as F  # lazy
 
@@ -502,7 +501,7 @@ class VFIModule(pl.LightningModule):
         kernel = (g1d[:, None] @ g1d[None, :]).expand(c, 1, win, win).contiguous()
         pad = win // 2
 
-        def filt(x: "Tensor") -> "Tensor":
+        def filt(x: Tensor) -> Tensor:
             return F.conv2d(F.pad(x, (pad, pad, pad, pad), mode="reflect"), kernel, groups=c)
 
         c1 = (0.01 * data_range) ** 2

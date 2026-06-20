@@ -78,7 +78,7 @@ def _encode_tile_webp(tile_img) -> bytes:
 
 
 def build_frame_tiles(
-    rgba_or_bt: "np.ndarray",
+    rgba_or_bt: np.ndarray,
     bbox: tuple[float, float, float, float] | list[float],
     out_dir: str | Path,
     frame_index: int,
@@ -163,7 +163,7 @@ def pmtiles_available() -> bool:
 
 
 def build_frame_pmtiles(
-    rgba_or_bt: "np.ndarray",
+    rgba_or_bt: np.ndarray,
     bbox: tuple[float, float, float, float] | list[float],
     out_dir: str | Path,
     frame_index: int,

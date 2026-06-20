@@ -1,8 +1,14 @@
 # FrameFlow Makefile — convenience targets for the monorepo.
-# `make demo` is the headline end-to-end target; it is robust (skips missing stages).
+# `make demo` is the headline end-to-end target: it runs the WHOLE pipeline on synthetic
+# data (data -> models -> train -> infer -> validate -> viz/precompute) and produces a
+# validated artifacts/<scene>/manifest.json plus a RESULTS.md metrics table.
 
 PYTHON ?= python
 PIP ?= $(PYTHON) -m pip
+
+# Cap BLAS/OMP/torch thread pools so the demo/tests never oversubscribe the CPU.
+THREAD_CAPS = OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 \
+              NUMEXPR_NUM_THREADS=2 PYTORCH_NUM_THREADS=2
 
 .DEFAULT_GOAL := help
 .PHONY: help install install-all synth train-demo interpolate-demo validate-demo \
@@ -48,11 +54,11 @@ web-install:  ## Install the web dashboard's node dependencies (Team WEB).
 web-build:  ## Build the web dashboard static bundle (Team WEB).
 	cd web && npm run build || echo "web-build skipped (web/ not present yet)."
 
-demo:  ## Run the full end-to-end demo chain (robust; skips missing stages).
-	$(PYTHON) scripts/demo.py
+demo:  ## Run the full REAL end-to-end demo (train IFNet -> infer -> validate -> precompute).
+	$(THREAD_CAPS) $(PYTHON) scripts/demo.py
 
 test:  ## Run the test suite (pytest).
-	$(PYTHON) -m pytest
+	$(THREAD_CAPS) $(PYTHON) -m pytest
 
 lint:  ## Lint with ruff.
 	$(PYTHON) -m ruff check frameflow scripts tests

@@ -46,7 +46,7 @@ CLASSICAL_METHODS: tuple[str, ...] = ("linear", "farneback", "tvl1")
 # ---------------------------------------------------------------------------
 # small array helpers (numpy imported lazily by callers; typed loosely)
 # ---------------------------------------------------------------------------
-def _to_hw(img: "np.ndarray") -> tuple["np.ndarray", tuple[int, ...]]:
+def _to_hw(img: np.ndarray) -> tuple[np.ndarray, tuple[int, ...]]:
     """Squeeze a single-channel array to 2-D ``(H, W)`` float32, remembering the orig shape.
 
     Accepts ``(H, W)``, ``(1, H, W)`` (channel-first) or ``(H, W, 1)`` (channel-last).
@@ -69,7 +69,7 @@ def _to_hw(img: "np.ndarray") -> tuple["np.ndarray", tuple[int, ...]]:
     return hw.astype(np.float32, copy=False), orig
 
 
-def _restore(hw: "np.ndarray", orig_shape: tuple[int, ...]) -> "np.ndarray":
+def _restore(hw: np.ndarray, orig_shape: tuple[int, ...]) -> np.ndarray:
     """Restore a 2-D ``(H, W)`` result to the caller's original channel layout."""
     import numpy as np
 
@@ -82,7 +82,7 @@ def _restore(hw: "np.ndarray", orig_shape: tuple[int, ...]) -> "np.ndarray":
     return hw  # pragma: no cover - guarded in _to_hw
 
 
-def _warp_by_flow(hw: "np.ndarray", flow: "np.ndarray") -> "np.ndarray":
+def _warp_by_flow(hw: np.ndarray, flow: np.ndarray) -> np.ndarray:
     """Backward-warp a 2-D image by a ``(H, W, 2)`` pixel flow via ``cv2.remap``.
 
     ``flow[y, x] = (dx, dy)`` is the displacement to ADD to the output coordinate to find
@@ -100,7 +100,7 @@ def _warp_by_flow(hw: "np.ndarray", flow: "np.ndarray") -> "np.ndarray":
     )
 
 
-def _normalize_for_flow(hw: "np.ndarray") -> "np.ndarray":
+def _normalize_for_flow(hw: np.ndarray) -> np.ndarray:
     """Scale a 2-D field to ``uint8`` [0,255] for OpenCV flow (its solvers expect 8-bit).
 
     Uses a robust min/max over the *pair-independent* single array; this is only an internal
@@ -120,7 +120,7 @@ def _normalize_for_flow(hw: "np.ndarray") -> "np.ndarray":
 # ---------------------------------------------------------------------------
 # baselines
 # ---------------------------------------------------------------------------
-def linear_blend(I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5) -> "np.ndarray":
+def linear_blend(I0: np.ndarray, I1: np.ndarray, t: float = 0.5) -> np.ndarray:
     """Linear temporal cross-fade ``(1 - t) * I0 + t * I1`` (no motion compensation).
 
     The simplest possible interpolation — and a required trivial baseline
@@ -145,12 +145,12 @@ def linear_blend(I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5) -> "np.ndar
 
 
 def _flow_interpolate(
-    I0: "np.ndarray",
-    I1: "np.ndarray",
+    I0: np.ndarray,
+    I1: np.ndarray,
     t: float,
-    flow01: "np.ndarray",
-    flow10: "np.ndarray",
-) -> "np.ndarray":
+    flow01: np.ndarray,
+    flow10: np.ndarray,
+) -> np.ndarray:
     """Shared warp-and-blend given precomputed forward/backward dense flows.
 
     Given the flow ``flow01`` (I0->I1) and ``flow10`` (I1->I0), approximate the frame at
@@ -170,7 +170,7 @@ def _flow_interpolate(
     return _restore(blended.astype(np.float32), orig)
 
 
-def farneback_interpolate(I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5) -> "np.ndarray":
+def farneback_interpolate(I0: np.ndarray, I1: np.ndarray, t: float = 0.5) -> np.ndarray:
     """Farnebäck dense-optical-flow interpolation (warp both frames to ``t``, blend).
 
     Computes dense flow with :func:`cv2.calcOpticalFlowFarneback` in both directions, scales
@@ -225,7 +225,7 @@ def _make_tvl1():
     )
 
 
-def tvl1_interpolate(I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5) -> "np.ndarray":
+def tvl1_interpolate(I0: np.ndarray, I1: np.ndarray, t: float = 0.5) -> np.ndarray:
     """TV-L1 dense-optical-flow interpolation (warp both frames to ``t``, blend).
 
     Same recipe as :func:`farneback_interpolate` but with the more accurate (and slower)
@@ -259,8 +259,8 @@ def tvl1_interpolate(I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5) -> "np.
 
 
 def classical_interpolate(
-    I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5, method: str = "tvl1"
-) -> "np.ndarray":
+    I0: np.ndarray, I1: np.ndarray, t: float = 0.5, method: str = "tvl1"
+) -> np.ndarray:
     """Unified dispatcher over the classical baselines.
 
     Args:

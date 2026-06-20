@@ -18,8 +18,9 @@ which are colorized on the fixed range). ``imageio``/``imageio-ffmpeg`` are impo
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 from .. import constants as C
 from .render import render_rgba
@@ -35,7 +36,7 @@ _CODEC_BY_SUFFIX = {
 }
 
 
-def _to_rgb_uint8(frame: "np.ndarray", cmap: str) -> "np.ndarray":
+def _to_rgb_uint8(frame: np.ndarray, cmap: str) -> np.ndarray:
     """Coerce a frame (BT 2D, RGB, or RGBA) to an ``(H, W, 3)`` ``uint8`` RGB array.
 
     RGBA is composited onto an opaque black background (matches the dark dashboard theme and
@@ -73,7 +74,7 @@ def _all_intra_output_params(codec: str) -> list[str]:
 
 
 def encode_video(
-    frames_rgba: Sequence["np.ndarray"],
+    frames_rgba: Sequence[np.ndarray],
     out_path: str | Path,
     fps: int = 10,
     all_intra: bool = True,
@@ -137,7 +138,7 @@ def encode_video(
 
 
 def encode_observed_video(
-    observed_frames: Sequence["np.ndarray"],
+    observed_frames: Sequence[np.ndarray],
     out_path: str | Path,
     fps: int = 10,
     cmap: str = C.DEFAULT_COLORMAP,
@@ -147,7 +148,7 @@ def encode_observed_video(
 
 
 def encode_interpolated_video(
-    all_frames: Sequence["np.ndarray"],
+    all_frames: Sequence[np.ndarray],
     out_path: str | Path,
     fps: int = 10,
     cmap: str = C.DEFAULT_COLORMAP,
@@ -161,8 +162,8 @@ def encode_interpolated_video(
 
 
 def encode_side_by_side(
-    left_frames: Sequence["np.ndarray"],
-    right_frames: Sequence["np.ndarray"],
+    left_frames: Sequence[np.ndarray],
+    right_frames: Sequence[np.ndarray],
     out_path: str | Path,
     fps: int = 10,
     gap_px: int = 4,
@@ -198,7 +199,7 @@ def encode_side_by_side(
     n = min(len(left), len(right))
     target_h = min(left[0].shape[0], right[0].shape[0])
 
-    def _fit_height(fr: "np.ndarray") -> "np.ndarray":
+    def _fit_height(fr: np.ndarray) -> np.ndarray:
         if fr.shape[0] == target_h:
             return fr
         from PIL import Image
@@ -213,9 +214,9 @@ def encode_side_by_side(
     sep = np.zeros((target_h, max(0, gap_px), 3), dtype=np.uint8)
     combined: list[np.ndarray] = []
     for i in range(n):
-        l = _fit_height(left[i])
-        r = _fit_height(right[i])
-        combined.append(np.concatenate([l, sep, r], axis=1))
+        lh = _fit_height(left[i])
+        rh = _fit_height(right[i])
+        combined.append(np.concatenate([lh, sep, rh], axis=1))
 
     return encode_video(combined, out_path, fps=fps, all_intra=True, cmap=cmap)
 

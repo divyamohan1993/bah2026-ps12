@@ -35,7 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 _CMAP_CACHE: dict[str, Any] = {}
 
 
-def _build_ir_clouds() -> "Colormap":
+def _build_ir_clouds() -> Colormap:
     """Build the enhanced IR-cloud colormap from the shared anchor stops.
 
     The stops in :data:`constants.IR_CLOUDS_COLORMAP_STOPS` are ``(bt_kelvin, "#rrggbb")``
@@ -60,7 +60,7 @@ def _build_ir_clouds() -> "Colormap":
     return LinearSegmentedColormap.from_list("ir_clouds", entries, N=256)
 
 
-def _build_greyscale_ir() -> "Colormap":
+def _build_greyscale_ir() -> Colormap:
     """Classic INVERTED-grey IR colormap (cold = white, warm = black)."""
     from matplotlib.colors import LinearSegmentedColormap
 
@@ -70,7 +70,7 @@ def _build_greyscale_ir() -> "Colormap":
     )
 
 
-def _build_turbo() -> "Colormap":
+def _build_turbo() -> Colormap:
     """Perceptually-uniform turbo, REVERSED so cold tops sit at the bright/red end."""
     import matplotlib as mpl
 
@@ -85,7 +85,7 @@ _BUILDERS = {
 }
 
 
-def get_colormap(name: str = "ir_clouds") -> "Colormap":
+def get_colormap(name: str = "ir_clouds") -> Colormap:
     """Return a (cached) matplotlib :class:`~matplotlib.colors.Colormap` by name.
 
     Args:
@@ -115,11 +115,11 @@ def get_colormap(name: str = "ir_clouds") -> "Colormap":
 
 
 def bt_to_rgba(
-    bt: "np.ndarray",
+    bt: np.ndarray,
     cmap: str = "ir_clouds",
     vmin: float = C.BT_METRIC_VMIN_K,
     vmax: float = C.BT_METRIC_VMAX_K,
-) -> "np.ndarray":
+) -> np.ndarray:
     """Colorize a brightness-temperature field to an 8-bit RGBA image (P1 fixed range).
 
     The BT field is normalized with the FIXED physical Kelvin range ``[vmin, vmax]``

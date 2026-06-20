@@ -17,8 +17,9 @@ Team MODELS / Team INFER. If neither is provided, ``/interpolate`` lazily tries
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .. import constants as C
 from .cache import InterpolationCache
@@ -27,7 +28,7 @@ from .cache import InterpolationCache
 ModelRunner = Callable[[Any, Any, float], Any]
 
 
-def _coerce_to_2d(data: Any) -> "Any":
+def _coerce_to_2d(data: Any) -> Any:
     """Coerce a JSON array / nested list to a 2D float32 numpy array."""
     import numpy as np
 
@@ -39,7 +40,7 @@ def _coerce_to_2d(data: Any) -> "Any":
     return arr
 
 
-def _read_nc_frame(path: str) -> "Any":
+def _read_nc_frame(path: str) -> Any:
     """Read a single-frame ``.nc`` file's ``bt`` field as a 2D float32 array (lazy xarray)."""
     import numpy as np
     import xarray as xr
@@ -82,7 +83,7 @@ def _runner_from_model(model: Any) -> ModelRunner:
     return _run
 
 
-def _infer_runner() -> Optional[ModelRunner]:
+def _infer_runner() -> ModelRunner | None:
     """Lazily build a runner from ``frameflow.infer`` if that team's module is available."""
     try:  # pragma: no cover - depends on Team INFER landing
         from ..infer import interpolate as _inf  # noqa: F401
@@ -103,7 +104,7 @@ def create_app(
     cache: InterpolationCache | None = None,
     cache_dir: str | Path = ".cache/frameflow/interp",
     redis_url: str | None = None,
-) -> "Any":
+) -> Any:
     """Create and return the FrameFlow FastAPI application.
 
     Args:
@@ -154,7 +155,7 @@ def create_app(
         return {"status": "ok"}
 
     @app.get("/manifest/{scene}")
-    def get_manifest(scene: str) -> "Any":
+    def get_manifest(scene: str) -> Any:
         """Serve a precomputed scene manifest (``artifacts/<scene>/manifest.json``)."""
         # Guard against path traversal in the scene id.
         if "/" in scene or ".." in scene or "\\" in scene:
@@ -171,7 +172,7 @@ def create_app(
         return JSONResponse(content=data)
 
     @app.post("/interpolate")
-    def interpolate(payload: dict) -> "Any":
+    def interpolate(payload: dict) -> Any:
         """Run on-demand interpolation between two frames and return PNG or NetCDF bytes.
 
         Request JSON (one of ``i0``/``i1`` inline arrays OR ``i0_nc``/``i1_nc`` paths)::
@@ -267,7 +268,7 @@ def create_app(
     return app
 
 
-def _encode_nc_bytes(frame_2d: "Any", *, t: float, model_version: str) -> bytes:
+def _encode_nc_bytes(frame_2d: Any, *, t: float, model_version: str) -> bytes:
     """Encode a single 2D BT frame as NetCDF bytes (CF-ish, schema-aligned attrs)."""
     import tempfile
 

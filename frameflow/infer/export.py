@@ -67,7 +67,7 @@ class _TForwardWrapper:  # pragma: no cover - tiny shim, exercised indirectly
         return out
 
 
-def _make_export_module(model: Any) -> "torch.nn.Module":
+def _make_export_module(model: Any) -> torch.nn.Module:
     """Return an ``nn.Module`` whose forward yields a single ``mid`` tensor for export."""
     import torch  # lazy
 
@@ -76,7 +76,7 @@ def _make_export_module(model: Any) -> "torch.nn.Module":
             super().__init__()
             self.inner = inner
 
-        def forward(self, img0: "torch.Tensor", img1: "torch.Tensor", t: "torch.Tensor") -> "torch.Tensor":
+        def forward(self, img0: torch.Tensor, img1: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
             out = self.inner(img0, img1, t)
             if isinstance(out, (tuple, list)):
                 out = out[0]

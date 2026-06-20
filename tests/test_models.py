@@ -381,7 +381,7 @@ class TestPretrained:
             warnings.simplefilter("ignore")
             m = load_pretrained("ifnet", str(ckpt), in_channels=1, hidden=16, scales=(2, 1))
         for (kr, vr), (km, vm) in zip(
-            ref.state_dict().items(), m.state_dict().items()
+            ref.state_dict().items(), m.state_dict().items(), strict=False
         ):
             assert kr == km
             assert torch.allclose(vr, vm)

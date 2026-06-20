@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     import numpy as np
 
 
-def _as_uv(flow: "np.ndarray") -> "np.ndarray":
+def _as_uv(flow: np.ndarray) -> np.ndarray:
     """Normalize a flow array to shape ``(H, W, 2)`` with last axis ``(u, v)``."""
     import numpy as np
 
@@ -36,7 +36,7 @@ def _as_uv(flow: "np.ndarray") -> "np.ndarray":
 
 
 def flow_to_overlay_json(
-    flow: "np.ndarray",
+    flow: np.ndarray,
     step: int,
     bbox: tuple[float, float, float, float] | list[float],
     scale: float = 1.0,
@@ -121,7 +121,7 @@ def flow_to_overlay_json(
 
 
 def save_flow_overlay(
-    flow: "np.ndarray",
+    flow: np.ndarray,
     step: int,
     bbox: tuple[float, float, float, float] | list[float],
     out_dir: str | Path,

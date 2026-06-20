@@ -52,7 +52,7 @@ PRETRAINED_SOURCES: dict[str, str] = {
 }
 
 
-def _extract_state_dict(obj: Any) -> dict[str, "torch.Tensor"]:
+def _extract_state_dict(obj: Any) -> dict[str, torch.Tensor]:
     """Pull a ``{param_name: tensor}`` mapping out of a loaded checkpoint object.
 
     Handles the common layouts: a raw ``state_dict``; a dict wrapping it under
@@ -79,7 +79,7 @@ def _extract_state_dict(obj: Any) -> dict[str, "torch.Tensor"]:
     return cleaned
 
 
-def adapt_to_single_channel(model: "nn.Module", *, mode: str = "average") -> "nn.Module":
+def adapt_to_single_channel(model: nn.Module, *, mode: str = "average") -> nn.Module:
     """Adapt a model's FIRST conv to accept a single input channel (in place).
 
     Finds the first :class:`torch.nn.Conv2d` whose ``in_channels`` is a multiple of 3 (an
@@ -165,7 +165,7 @@ def load_pretrained(
     in_channels: int = 1,
     strict: bool = False,
     **model_kwargs: Any,
-) -> "nn.Module":
+) -> nn.Module:
     """Return a VFI model, optionally initialized from a checkpoint.
 
     Behavior:

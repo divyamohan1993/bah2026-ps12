@@ -53,7 +53,7 @@ __all__ = [
 # ===========================================================================
 # Charbonnier — robust L1 (the default reconstruction term)
 # ===========================================================================
-def charbonnier_loss(pred: "Tensor", gt: "Tensor", eps: float = 1e-3) -> "Tensor":
+def charbonnier_loss(pred: Tensor, gt: Tensor, eps: float = 1e-3) -> Tensor:
     r"""Charbonnier (smooth-L1 / pseudo-Huber) reconstruction loss.
 
     Computes ``mean( sqrt((pred - gt)^2 + eps^2) )``. The Charbonnier penalty
@@ -76,7 +76,7 @@ def charbonnier_loss(pred: "Tensor", gt: "Tensor", eps: float = 1e-3) -> "Tensor
 # ===========================================================================
 # Census / ternary transform — illumination-robust structural loss
 # ===========================================================================
-def _rgb_to_gray(x: "Tensor") -> "Tensor":
+def _rgb_to_gray(x: Tensor) -> Tensor:
     """Collapse a tensor to a single channel for the census transform.
 
     Single-channel TIR is returned unchanged; multi-channel inputs are averaged across the
@@ -87,7 +87,7 @@ def _rgb_to_gray(x: "Tensor") -> "Tensor":
     return x.mean(dim=1, keepdim=True)
 
 
-def _census_transform(img: "Tensor", patch_size: int = 7, eps: float = 1e-2) -> "Tensor":
+def _census_transform(img: Tensor, patch_size: int = 7, eps: float = 1e-2) -> Tensor:
     r"""Soft census (ternary) transform of a single-channel image.
 
     The census transform encodes, for every pixel, the *sign of the difference* between the
@@ -121,7 +121,7 @@ def _census_transform(img: "Tensor", patch_size: int = 7, eps: float = 1e-2) -> 
     return transformed
 
 
-def census_loss(pred: "Tensor", gt: "Tensor", patch_size: int = 7) -> "Tensor":
+def census_loss(pred: Tensor, gt: Tensor, patch_size: int = 7) -> Tensor:
     r"""Census/ternary-transform structural loss (illumination-robust; good for clouds).
 
     Applies the soft :func:`_census_transform` to both ``pred`` and ``gt`` and returns the
@@ -150,7 +150,7 @@ def census_loss(pred: "Tensor", gt: "Tensor", patch_size: int = 7) -> "Tensor":
 # ===========================================================================
 # MS-SSIM loss (uses piq.multi_scale_ssim with a FIXED data_range)
 # ===========================================================================
-def _ms_ssim_scale_weights(min_hw: int, kernel_size: int = 7) -> "Tensor | None":
+def _ms_ssim_scale_weights(min_hw: int, kernel_size: int = 7) -> Tensor | None:
     """Pick MS-SSIM scale weights that fit the smallest spatial dimension.
 
     :func:`piq.multi_scale_ssim` halves the image once per scale and requires the smallest
@@ -181,7 +181,7 @@ def _ms_ssim_scale_weights(min_hw: int, kernel_size: int = 7) -> "Tensor | None"
     return w / w.sum()
 
 
-def ms_ssim_loss(pred: "Tensor", gt: "Tensor", data_range: float = 1.0) -> "Tensor":
+def ms_ssim_loss(pred: Tensor, gt: Tensor, data_range: float = 1.0) -> Tensor:
     r"""Multi-scale SSIM loss, ``1 - MS-SSIM``, via :func:`piq.multi_scale_ssim`.
 
     MS-SSIM aligns the training objective with the SSIM-family evaluation metrics
@@ -235,7 +235,7 @@ def ms_ssim_loss(pred: "Tensor", gt: "Tensor", data_range: float = 1.0) -> "Tens
 # ===========================================================================
 # Gradient loss (Sobel edge preservation)
 # ===========================================================================
-def _sobel_kernels(dtype: torch.dtype, device: torch.device) -> tuple["Tensor", "Tensor"]:
+def _sobel_kernels(dtype: torch.dtype, device: torch.device) -> tuple[Tensor, Tensor]:
     """Return the (Gx, Gy) Sobel kernels as ``(1, 1, 3, 3)`` tensors."""
     gx = torch.tensor(
         [[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]],
@@ -250,7 +250,7 @@ def _sobel_kernels(dtype: torch.dtype, device: torch.device) -> tuple["Tensor", 
     return gx, gy
 
 
-def gradient_loss(pred: "Tensor", gt: "Tensor") -> "Tensor":
+def gradient_loss(pred: Tensor, gt: Tensor) -> Tensor:
     r"""Sobel-gradient (edge-preservation) loss.
 
     Compares the spatial image gradients (Sobel Gx/Gy) of ``pred`` and ``gt`` with a
@@ -285,10 +285,10 @@ def gradient_loss(pred: "Tensor", gt: "Tensor") -> "Tensor":
 # Optional flow-distillation loss (IFRNet/RIFE privileged supervision)
 # ===========================================================================
 def flow_distillation_loss(
-    student_flows: "Tensor | list[Tensor] | None",
-    teacher_flows: "Tensor | list[Tensor] | None",
+    student_flows: Tensor | list[Tensor] | None,
+    teacher_flows: Tensor | list[Tensor] | None,
     eps: float = 1e-3,
-) -> "Tensor":
+) -> Tensor:
     r"""Optional task-oriented flow-distillation loss (IFRNet/RIFE; research/06 §5.2).
 
     When fine-tuning IFRNet/RIFE you can keep the privileged flow supervision term
@@ -319,7 +319,7 @@ def flow_distillation_loss(
         return torch.zeros((), dtype=ref.dtype, device=ref.device)
 
     total = None
-    for s, t in zip(s_list, t_list):
+    for s, t in zip(s_list, t_list, strict=False):
         if s.shape[-2:] != t.shape[-2:]:
             # Upsample the coarser flow (and scale its magnitude) to match the finer one.
             target_hw = (max(s.shape[-2], t.shape[-2]), max(s.shape[-1], t.shape[-1]))
@@ -404,12 +404,12 @@ class CombinedLoss(torch.nn.Module):
 
     def forward(
         self,
-        pred: "Tensor",
-        gt: "Tensor",
+        pred: Tensor,
+        gt: Tensor,
         *,
-        student_flows: "Tensor | list[Tensor] | None" = None,
-        teacher_flows: "Tensor | list[Tensor] | None" = None,
-    ) -> tuple["Tensor", dict[str, "Tensor"]]:
+        student_flows: Tensor | list[Tensor] | None = None,
+        teacher_flows: Tensor | list[Tensor] | None = None,
+    ) -> tuple[Tensor, dict[str, Tensor]]:
         """Compute the combined loss and a dict of its (unweighted) component values.
 
         Args:

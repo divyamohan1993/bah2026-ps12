@@ -26,15 +26,15 @@ Design rules honoured here:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Sequence
+from typing import TYPE_CHECKING, Any
 
 from .. import constants as C
 
 if TYPE_CHECKING:  # typing only
     import numpy as np
-    import torch
 
 
 __all__ = [
@@ -87,11 +87,11 @@ def _resolve_normalizers(
     vmax = float(C.BT_NORM_VMAX_K)
     span = max(vmax - vmin, 1e-6)
 
-    def _fallback_norm(a: "np.ndarray") -> "np.ndarray":
+    def _fallback_norm(a: np.ndarray) -> np.ndarray:
         x = (np.asarray(a, dtype=np.float32) - vmin) / span
         return x
 
-    def _fallback_denorm(a: "np.ndarray") -> "np.ndarray":
+    def _fallback_denorm(a: np.ndarray) -> np.ndarray:
         return np.asarray(a, dtype=np.float32) * span + vmin
 
     norm = normalizer or data_norm or _fallback_norm
@@ -99,7 +99,7 @@ def _resolve_normalizers(
     return norm, denorm
 
 
-def _to_chw(arr: "np.ndarray") -> "np.ndarray":
+def _to_chw(arr: np.ndarray) -> np.ndarray:
     """Return a single-channel ``(1, H, W)`` float32 view of a 2D ``(H, W)`` or ``(1,H,W)`` array."""
     import numpy as np  # lazy
 
@@ -123,7 +123,7 @@ def interpolate_pair(
     denormalizer: Normalizer | None = None,
     fill_nan_for_model: float = 0.0,
     **kw: Any,
-) -> "np.ndarray":
+) -> np.ndarray:
     """Synthesize one intermediate frame at fraction ``t`` from two bracketing frames.
 
     Pipeline: NaN-mask the inputs -> normalize Kelvin to the model's input convention ->
@@ -198,7 +198,15 @@ def interpolate_pair(
 
     with torch.no_grad():
         out = model.forward(t0, t1, t_tensor)
-    if isinstance(out, (tuple, list)):  # forward_with_flow-style models return (It, flow)
+    # Normalize the model output to a single prediction tensor. The MODELS registry
+    # contract returns a dict with a "pred" key (IFNet: {"pred","flow","mask"});
+    # forward_with_flow-style models return a (It, flow) tuple; some dummies return a
+    # bare tensor. Accept all three.
+    if isinstance(out, dict):
+        out = out.get("pred", out.get("It"))
+        if out is None:
+            raise KeyError("model output dict has no 'pred'/'It' key")
+    elif isinstance(out, (tuple, list)):  # (It, flow, ...) — take the predicted frame
         out = out[0]
     out_np = out.detach().to("cpu").numpy()
 
@@ -232,7 +240,7 @@ class InterpolatedFrame:
             when the caller provides observed-frame times.
     """
 
-    bt: "np.ndarray"
+    bt: np.ndarray
     t_global: float
     kind: str
     t_local: float | None = None
@@ -251,7 +259,7 @@ def _subdivision_levels(factor: int) -> int:
     return {2: 1, 4: 2, 8: 3}[factor]
 
 
-def _to_dt64ns(when: Any) -> "np.datetime64":
+def _to_dt64ns(when: Any) -> np.datetime64:
     """Coerce a timestamp to ``datetime64[ns]``, accepting ints (nanoseconds since epoch).
 
     ``np.datetime64(int)`` raises ("requires a specified unit"), which bites when a caller
@@ -335,7 +343,7 @@ def interpolate_recursive(
 
     n_obs = len(obs)
 
-    def _do(I0: Any, I1: Any, frac: float) -> "np.ndarray":
+    def _do(I0: Any, I1: Any, frac: float) -> np.ndarray:
         return interpolate_pair(
             model, I0, I1, frac,
             dataset=dataset, device=device,
@@ -353,10 +361,10 @@ def interpolate_recursive(
 
         # nodes: list of (global_fraction_within_interval, frame_array). Start with the two
         # observed endpoints; recursively bisect every adjacent gap `rounds` times.
-        nodes: list[tuple[float, "np.ndarray"]] = [(0.0, left_obs), (1.0, right_obs)]
+        nodes: list[tuple[float, np.ndarray]] = [(0.0, left_obs), (1.0, right_obs)]
         for _ in range(rounds):
-            new_nodes: list[tuple[float, "np.ndarray"]] = [nodes[0]]
-            for a, b in zip(nodes[:-1], nodes[1:]):
+            new_nodes: list[tuple[float, np.ndarray]] = [nodes[0]]
+            for a, b in zip(nodes[:-1], nodes[1:], strict=False):
                 fa, fA = a
                 fb, fB = b
                 mid_frac = 0.5 * (fa + fb)

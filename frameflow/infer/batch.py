@@ -21,11 +21,11 @@ from typing import TYPE_CHECKING, Any
 
 from .. import constants as C
 from ..contracts import CubeSchema, GridSpec
-from .interpolate import InterpolatedFrame, interpolate_recursive
+from .interpolate import interpolate_recursive
 from .netcdf_io import write_frame_nc
 
 if TYPE_CHECKING:  # typing only
-    import numpy as np
+    pass
 
 
 __all__ = ["interpolate_cube", "DensifiedFrame", "CubeInterpolationResult"]

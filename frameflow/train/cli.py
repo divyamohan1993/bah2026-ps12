@@ -151,7 +151,7 @@ def _build_callbacks(ckpt_dir: str) -> list[pl.Callback]:
 # Trainer factory
 # ---------------------------------------------------------------------------
 def build_trainer(
-    train_cfg: "_config.TrainConfig",
+    train_cfg: _config.TrainConfig,
     *,
     accelerator: str = "auto",
     devices: Any = "auto",
@@ -208,9 +208,9 @@ def build_trainer(
 # Plain (non-Hydra) training entrypoint
 # ---------------------------------------------------------------------------
 def run_training(
-    cfg: "_config.FrameFlowConfig | None" = None,
+    cfg: _config.FrameFlowConfig | None = None,
     *,
-    model: "torch.nn.Module | None" = None,
+    model: torch.nn.Module | None = None,
     datamodule: VFIDataModule | None = None,
     dataset: Any = None,
     accelerator: str = "auto",
@@ -297,7 +297,7 @@ def _best_ckpt_path(trainer: pl.Trainer, ckpt_dir: str) -> Path:
 # ---------------------------------------------------------------------------
 # Hydra entrypoint
 # ---------------------------------------------------------------------------
-def _to_frameflow_config(cfg: Any) -> "_config.FrameFlowConfig":
+def _to_frameflow_config(cfg: Any) -> _config.FrameFlowConfig:
     """Coerce a Hydra/OmegaConf ``DictConfig`` (or a FrameFlowConfig) into FrameFlowConfig.
 
     When OmegaConf is available we ``OmegaConf.to_object`` / merge into the structured

@@ -24,7 +24,8 @@ The split is implemented two ways, in order of preference:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Sequence
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset, Subset
@@ -163,11 +164,11 @@ class VFIDataModule(pl.LightningDataModule):
     @classmethod
     def from_config(
         cls,
-        data_cfg: "_config.DataConfig",
+        data_cfg: _config.DataConfig,
         *,
         dataset: Dataset | None = None,
         batch_size: int | None = None,
-    ) -> "VFIDataModule":
+    ) -> VFIDataModule:
         """Build a :class:`VFIDataModule` from a :class:`frameflow.config.DataConfig`.
 
         Args:

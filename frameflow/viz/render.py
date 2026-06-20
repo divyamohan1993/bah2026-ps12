@@ -34,7 +34,7 @@ _FMT_TO_PIL = {
 }
 
 
-def _is_rgba(arr: "np.ndarray") -> bool:
+def _is_rgba(arr: np.ndarray) -> bool:
     """Return True if ``arr`` already looks like an ``(H, W, 4)`` uint8 RGBA image."""
     import numpy as np
 
@@ -43,11 +43,11 @@ def _is_rgba(arr: "np.ndarray") -> bool:
 
 
 def render_rgba(
-    bt_or_rgba: "np.ndarray",
+    bt_or_rgba: np.ndarray,
     cmap: str = C.DEFAULT_COLORMAP,
     vmin: float = C.BT_METRIC_VMIN_K,
     vmax: float = C.BT_METRIC_VMAX_K,
-) -> "np.ndarray":
+) -> np.ndarray:
     """Return an ``(H, W, 4)`` ``uint8`` RGBA image for a BT field or pass through RGBA.
 
     If ``bt_or_rgba`` is already an ``(H, W, 4)`` ``uint8`` array it is returned (copied)
@@ -61,7 +61,7 @@ def render_rgba(
     return bt_to_rgba(bt_or_rgba, cmap=cmap, vmin=vmin, vmax=vmax)
 
 
-def _encode_rgba(rgba: "np.ndarray", fmt: str) -> bytes:
+def _encode_rgba(rgba: np.ndarray, fmt: str) -> bytes:
     """Encode an ``(H, W, 4)`` uint8 RGBA array to image bytes via Pillow."""
     import io
 
@@ -88,7 +88,7 @@ def _encode_rgba(rgba: "np.ndarray", fmt: str) -> bytes:
 
 
 def render_frame(
-    bt: "np.ndarray",
+    bt: np.ndarray,
     cmap: str = C.DEFAULT_COLORMAP,
     out_path: str | Path | None = None,
     fmt: str = C.DEFAULT_TILE_FORMAT,
@@ -127,7 +127,7 @@ def render_frame(
 
 
 def save_frame(
-    bt: "np.ndarray",
+    bt: np.ndarray,
     out_path: str | Path,
     cmap: str = C.DEFAULT_COLORMAP,
     fmt: str | None = None,
@@ -148,7 +148,7 @@ def save_frame(
 
 
 def make_thumbnail(
-    bt: "np.ndarray",
+    bt: np.ndarray,
     max_size: int = 128,
     cmap: str = C.DEFAULT_COLORMAP,
     fmt: str = C.DEFAULT_TILE_FORMAT,

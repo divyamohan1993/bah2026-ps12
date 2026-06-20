@@ -18,15 +18,16 @@ backend is forced to ``Agg`` so importing this module never opens a display.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any
 
 from .. import constants as C
 from ..contracts import CrossvalMethodResult, MetricRecord
 from .crossval import _bootstrap_ci
 
 if TYPE_CHECKING:  # typing only
-    import numpy as np
+    pass
 
 
 __all__ = ["make_report", "summarize_metrics"]
@@ -110,7 +111,6 @@ def _fig_scorecard(
 def _fig_metric_vs_frame(out_path: Path, records: list[dict[str, Any]], metric: str) -> Path:
     """Line plot of one metric over the frame index (research/05 §5.2)."""
     import matplotlib.pyplot as plt  # lazy
-    import numpy as np  # lazy
 
     idx = [d.get("index", i) for i, d in enumerate(records)]
     vals = [d.get(metric, float("nan")) for d in records]

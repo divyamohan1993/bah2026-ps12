@@ -23,18 +23,18 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     import numpy as np
 
 
-def _array_digest(arr: "np.ndarray") -> bytes:
+def _array_digest(arr: np.ndarray) -> bytes:
     """Return a deterministic byte signature for an array (shape + dtype + C-order bytes)."""
     import numpy as np
 
     a = np.ascontiguousarray(np.asarray(arr))
-    header = f"{a.dtype.str}|{a.shape}".encode("utf-8")
+    header = f"{a.dtype.str}|{a.shape}".encode()
     return header + a.tobytes(order="C")
 
 
 def key(
-    i0: "np.ndarray",
-    i1: "np.ndarray",
+    i0: np.ndarray,
+    i1: np.ndarray,
     t: float,
     model_ver: str,
 ) -> str:
@@ -57,9 +57,9 @@ def key(
     h.update(b"\x00")
     # Format t with fixed precision so 0.5 and 0.5000001 don't collide unexpectedly while
     # bit-identical floats hash identically.
-    h.update(f"t={float(t):.9g}".encode("utf-8"))
+    h.update(f"t={float(t):.9g}".encode())
     h.update(b"\x00")
-    h.update(f"model={model_ver}".encode("utf-8"))
+    h.update(f"model={model_ver}".encode())
     return h.hexdigest()
 
 
@@ -100,7 +100,7 @@ class InterpolationCache:
 
     # -- key helpers -----------------------------------------------------------------------
     @staticmethod
-    def make_key(i0: "np.ndarray", i1: "np.ndarray", t: float, model_ver: str) -> str:
+    def make_key(i0: np.ndarray, i1: np.ndarray, t: float, model_ver: str) -> str:
         """Content-addressed key for ``(i0, i1, t, model_ver)`` (see module-level :func:`key`)."""
         return key(i0, i1, t, model_ver)
 

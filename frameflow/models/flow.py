@@ -32,7 +32,7 @@ __all__ = ["flow_to_image", "flow_to_vectors", "make_color_wheel", "RAFTFlow"]
 # ---------------------------------------------------------------------------
 # Middlebury color wheel
 # ---------------------------------------------------------------------------
-def make_color_wheel() -> "np.ndarray":
+def make_color_wheel() -> np.ndarray:
     """Build the Middlebury optical-flow color wheel as an ``(N, 3)`` uint8 array.
 
     The wheel concatenates six hue ramps (RY, YG, GC, CB, BM, MR) so that flow *direction*
@@ -71,7 +71,7 @@ def make_color_wheel() -> "np.ndarray":
     return wheel.astype(np.uint8)
 
 
-def _flow_to_hw2(flow: Any) -> "np.ndarray":
+def _flow_to_hw2(flow: Any) -> np.ndarray:
     """Coerce a flow to a contiguous ``(H, W, 2)`` float32 numpy array.
 
     Accepts numpy or torch, channel-first ``(2, H, W)`` / batched ``(1, 2, H, W)`` or
@@ -95,7 +95,7 @@ def _flow_to_hw2(flow: Any) -> "np.ndarray":
     return np.ascontiguousarray(arr, dtype=np.float32)
 
 
-def flow_to_image(flow: Any, *, max_magnitude: float | None = None) -> "np.ndarray":
+def flow_to_image(flow: Any, *, max_magnitude: float | None = None) -> np.ndarray:
     """Convert a dense optical-flow field to a Middlebury-colored RGB image.
 
     Hue encodes flow direction (via :func:`make_color_wheel`); saturation/brightness encode
@@ -175,7 +175,6 @@ def flow_to_vectors(flow: Any, step: int = 16) -> list[dict[str, float]]:
         A list of ``{"x": float, "y": float, "dx": float, "dy": float}`` dicts (pixel
         coordinates and pixel displacements). Non-finite samples are skipped.
     """
-    import numpy as np
 
     if step < 1:
         raise ValueError("step must be >= 1")
@@ -232,7 +231,6 @@ class RAFTFlow:
             return self._model
         import warnings
 
-        import torch
         from torchvision.models.optical_flow import raft_small
 
         weights = None
@@ -264,7 +262,7 @@ class RAFTFlow:
         return model
 
     @staticmethod
-    def _to_rgb(x: "torch.Tensor") -> "torch.Tensor":
+    def _to_rgb(x: torch.Tensor) -> torch.Tensor:
         """Replicate a single-channel ``(B,1,H,W)`` tensor to 3 channels; pass 3ch through."""
         if x.shape[1] == 1:
             return x.repeat(1, 3, 1, 1)
@@ -272,7 +270,7 @@ class RAFTFlow:
             return x
         raise ValueError(f"RAFTFlow expects 1- or 3-channel input, got {x.shape[1]} channels")
 
-    def __call__(self, img0: "torch.Tensor", img1: "torch.Tensor") -> "torch.Tensor":
+    def __call__(self, img0: torch.Tensor, img1: torch.Tensor) -> torch.Tensor:
         """Estimate dense flow ``img0 -> img1``.
 
         Args:

@@ -372,7 +372,9 @@ def test_triplet_dataset_time_split_no_leakage(tmp_path):
         # cover all interior frames
         assert mids_tr | mids_va | mids_te == set(range(1, 10 - 1))
     finally:
-        tr.close(); va.close(); te.close()
+        tr.close()
+        va.close()
+        te.close()
 
 
 def test_triplet_dataset_index_out_of_range(tmp_path):

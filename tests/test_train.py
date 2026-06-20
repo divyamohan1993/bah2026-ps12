@@ -428,7 +428,7 @@ def test_configure_optimizers_excludes_frozen_params() -> None:
 # ===========================================================================
 # 5. End-to-end training — Trainer.fit completes and overfits one batch
 # ===========================================================================
-def _build_trainer(callbacks: list) -> "pl.Trainer":
+def _build_trainer(callbacks: list) -> pl.Trainer:
     """A tiny CPU Trainer for the overfit-one-batch sanity test (max 4 steps)."""
     return pl.Trainer(
         max_steps=4,

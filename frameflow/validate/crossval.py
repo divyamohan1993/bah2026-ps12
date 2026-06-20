@@ -35,10 +35,10 @@ Each executed method returns a :class:`frameflow.contracts.CrossvalMethodResult`
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Sequence
+from typing import TYPE_CHECKING, Any
 
-from .. import constants as C
 from ..contracts import CrossvalMethodResult
 from .metrics import compute_metrics
 
@@ -301,7 +301,7 @@ _METHODS: tuple[MethodSpec, ...] = (
 # ===========================================================================
 # 2. Classical baselines (implemented locally — NO models-package import)
 # ===========================================================================
-def frame_copy_baseline(I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5) -> "np.ndarray":
+def frame_copy_baseline(I0: np.ndarray, I1: np.ndarray, t: float = 0.5) -> np.ndarray:
     """Persistence baseline (research/05 M18): just repeat the nearer bracketing frame.
 
     Args:
@@ -319,7 +319,7 @@ def frame_copy_baseline(I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5) -> "
     return (a0 if t < 0.5 else a1).copy()
 
 
-def linear_blend_baseline(I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5) -> "np.ndarray":
+def linear_blend_baseline(I0: np.ndarray, I1: np.ndarray, t: float = 0.5) -> np.ndarray:
     """Linear-blend baseline (research/05 M19): ``(1-t)*I0 + t*I1`` (classic ghosting).
 
     NaNs are handled per-pixel (a blend with a NaN stays NaN), matching the off-disk mask
@@ -340,7 +340,7 @@ def linear_blend_baseline(I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5) ->
     return ((1.0 - float(t)) * a0 + float(t) * a1).astype(np.float32)
 
 
-def _farneback_flow(prev: "np.ndarray", nxt: "np.ndarray") -> "np.ndarray":
+def _farneback_flow(prev: np.ndarray, nxt: np.ndarray) -> np.ndarray:
     """Dense Farneback optical flow ``prev -> nxt`` in pixels, shape ``(H, W, 2)`` (dx, dy)."""
     import cv2  # lazy
     import numpy as np  # lazy
@@ -352,7 +352,7 @@ def _farneback_flow(prev: "np.ndarray", nxt: "np.ndarray") -> "np.ndarray":
     )
 
 
-def _tvl1_flow(prev: "np.ndarray", nxt: "np.ndarray") -> "np.ndarray":
+def _tvl1_flow(prev: np.ndarray, nxt: np.ndarray) -> np.ndarray:
     """TV-L1 optical flow ``prev -> nxt`` if the OpenCV contrib module is present.
 
     Falls back to a compact pure-numpy Horn-Schunck flow when ``cv2.optflow`` (the contrib
@@ -376,8 +376,8 @@ def _tvl1_flow(prev: "np.ndarray", nxt: "np.ndarray") -> "np.ndarray":
 
 
 def _horn_schunck_flow(
-    prev: "np.ndarray", nxt: "np.ndarray", *, n_iter: int = 60, alpha: float = 1.0
-) -> "np.ndarray":
+    prev: np.ndarray, nxt: np.ndarray, *, n_iter: int = 60, alpha: float = 1.0
+) -> np.ndarray:
     """Compact pure-numpy Horn-Schunck dense optical flow (variational, TV-L1 stand-in).
 
     Implements the classic global smoothness flow (Horn & Schunck 1981) with Jacobi
@@ -407,7 +407,7 @@ def _horn_schunck_flow(
     u = np.zeros_like(p)
     v = np.zeros_like(p)
     # 4-neighbour averaging kernel (von-Neumann), applied via simple shifts.
-    def _avg(a: "np.ndarray") -> "np.ndarray":
+    def _avg(a: np.ndarray) -> np.ndarray:
         s = np.zeros_like(a)
         s[1:, :] += a[:-1, :]
         s[:-1, :] += a[1:, :]
@@ -426,7 +426,7 @@ def _horn_schunck_flow(
     return np.stack([u, v], axis=-1).astype(np.float32)
 
 
-def _warp_by_flow(img: "np.ndarray", flow: "np.ndarray") -> "np.ndarray":
+def _warp_by_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
     """Backward-warp ``img`` by a ``(H, W, 2)`` pixel flow using ``cv2.remap`` (bilinear)."""
     import cv2  # lazy
     import numpy as np  # lazy
@@ -442,8 +442,8 @@ def _warp_by_flow(img: "np.ndarray", flow: "np.ndarray") -> "np.ndarray":
 
 
 def optical_flow_baseline(
-    I0: "np.ndarray", I1: "np.ndarray", t: float = 0.5, *, method: str = "farneback"
-) -> "np.ndarray":
+    I0: np.ndarray, I1: np.ndarray, t: float = 0.5, *, method: str = "farneback"
+) -> np.ndarray:
     """Classical optical-flow VFI baseline (research/05 M20): flow-warp + blend.
 
     Estimates dense flow both ways, scales each by the temporal fraction, backward-warps each
@@ -487,7 +487,7 @@ def optical_flow_baseline(
 # ===========================================================================
 # 3. Small analysis helpers (PSD ratio, flow speed, bootstrap, etc.)
 # ===========================================================================
-def _radial_psd(field: "np.ndarray") -> "np.ndarray":
+def _radial_psd(field: np.ndarray) -> np.ndarray:
     """Return the 1-D radially-averaged power-spectral-density of a 2-D field (research/05 §3.9).
 
     NaNs are filled with the field mean before the FFT. The returned vector is PSD vs integer
@@ -511,7 +511,7 @@ def _radial_psd(field: "np.ndarray") -> "np.ndarray":
     return (radial / counts).astype(np.float64)
 
 
-def _psd_ratio_highband(pred: "np.ndarray", truth: "np.ndarray") -> float:
+def _psd_ratio_highband(pred: np.ndarray, truth: np.ndarray) -> float:
     """Mean PSD(pred)/PSD(truth) over the high-wavenumber half (fine-scale fidelity, ~1 is best)."""
     import numpy as np  # lazy
 
@@ -529,7 +529,7 @@ def _psd_ratio_highband(pred: "np.ndarray", truth: "np.ndarray") -> float:
     return float(np.mean(pt[valid] / tt[valid]))
 
 
-def _flow_speed(I0: "np.ndarray", I1: "np.ndarray") -> float:
+def _flow_speed(I0: np.ndarray, I1: np.ndarray) -> float:
     """Mean dense optical-flow magnitude (pixels) between two frames — a 'cloud speed' proxy."""
     import numpy as np  # lazy
 
@@ -572,10 +572,10 @@ def _bootstrap_ci(
 class _Cube:
     """Internal: a dense synthetic test cube (frames + timestamps + grid coords)."""
 
-    frames: list["np.ndarray"]   # list of (H, W) Kelvin arrays, NaN off-disk
+    frames: list[np.ndarray]   # list of (H, W) Kelvin arrays, NaN off-disk
     times: list[Any]
-    lat: "np.ndarray"
-    lon: "np.ndarray"
+    lat: np.ndarray
+    lon: np.ndarray
 
 
 class CrossValSuite:
@@ -661,7 +661,6 @@ class CrossValSuite:
             methods carry real ``summary`` scalars; data-dependent methods are ``"skipped"``
             with a ``requires`` note.
         """
-        import numpy as np  # lazy
 
         available_data = dict(available_data or {})
         cube = self._resolve_cube(available_data)
@@ -777,9 +776,8 @@ class CrossValSuite:
             lon=np.asarray(grid.lon_coords(), dtype=np.float64),
         )
 
-    def _predict(self, I0: "np.ndarray", I1: "np.ndarray", t: float) -> "np.ndarray":
+    def _predict(self, I0: np.ndarray, I1: np.ndarray, t: float) -> np.ndarray:
         """Run the model-under-test (or the linear-blend fallback) for one intermediate frame."""
-        import numpy as np  # lazy
 
         if self.model is None:
             return linear_blend_baseline(I0, I1, t)
@@ -796,7 +794,6 @@ class CrossValSuite:
         from frames ``k-1`` and ``k+1`` by the model and by each baseline; metrics vs the
         withheld truth are stored. Also stores per-triplet flow-speed and PSD ratios.
         """
-        import numpy as np  # lazy
 
         frames = cube.frames
         n = len(frames)
@@ -812,13 +809,19 @@ class CrossValSuite:
                 pred_flow = pred_blend
             entry = {
                 "k": k,
-                "speed": self._safe(lambda: _flow_speed(I0, I1)),
+                # Bind the loop variables as lambda defaults (the lambdas are evaluated
+                # immediately by _safe in this iteration; defaults make that explicit).
+                "speed": self._safe(lambda I0=I0, I1=I1: _flow_speed(I0, I1)),
                 "model": compute_metrics(pred_model, gt),
                 "frame_copy": compute_metrics(pred_copy, gt),
                 "linear_blend": compute_metrics(pred_blend, gt),
                 "optical_flow": compute_metrics(pred_flow, gt),
-                "psd_ratio_model": self._safe(lambda: _psd_ratio_highband(pred_model, gt)),
-                "psd_ratio_blend": self._safe(lambda: _psd_ratio_highband(pred_blend, gt)),
+                "psd_ratio_model": self._safe(
+                    lambda pred_model=pred_model, gt=gt: _psd_ratio_highband(pred_model, gt)
+                ),
+                "psd_ratio_blend": self._safe(
+                    lambda pred_blend=pred_blend, gt=gt: _psd_ratio_highband(pred_blend, gt)
+                ),
             }
             per.append(entry)
         return {"cube": cube, "per": per, "n": n}
@@ -896,7 +899,7 @@ class CrossValSuite:
             summary=summary, details={"note": "BT-RMSE(K) per up-sampling factor"},
         )
 
-    def _dense_blend(self, I0: "np.ndarray", I1: "np.ndarray", factor: int) -> list["np.ndarray"]:
+    def _dense_blend(self, I0: np.ndarray, I1: np.ndarray, factor: int) -> list[np.ndarray]:
         """Linear-blend densification (factor+1 frames incl. endpoints) — model-free fallback."""
         return [linear_blend_baseline(I0, I1, j / factor) for j in range(factor + 1)]
 
@@ -953,7 +956,6 @@ class CrossValSuite:
 
     def _m6_long_gap(self, ctx: dict[str, Any]) -> CrossvalMethodResult:
         """Long-gap stress: predict the middle of a wide bracket and compare to the real frame."""
-        import numpy as np  # lazy
 
         cube: _Cube = ctx["cube"]
         frames = cube.frames
@@ -1132,7 +1134,7 @@ class CrossValSuite:
         )
         # Paired Wilcoxon on PSNR (model vs blend); needs paired finite samples with nonzero diffs.
         wilcoxon_p = float("nan")
-        pairs = [(m, b) for m, b in zip(model_psnr, blend_psnr)
+        pairs = [(m, b) for m, b in zip(model_psnr, blend_psnr, strict=False)
                  if np.isfinite(m) and np.isfinite(b)]
         diffs = [m - b for m, b in pairs]
         if len(diffs) >= 3 and any(abs(d) > 1e-9 for d in diffs):
@@ -1189,7 +1191,6 @@ class CrossValSuite:
         # Insert a midpoint and check its domain-mean BT lies between the neighbours' means.
         violations = 0
         total = 0
-        cold_th = 240.0
         for k in range(1, len(frames) - 1):
             I0, I1 = frames[k - 1], frames[k + 1]
             mid = self._predict(I0, I1, 0.5)
