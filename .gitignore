@@ -32,11 +32,13 @@ htmlcov/
 
 # ---------------------------------------------------------------------------
 # Data artifacts & generated outputs (large / regenerable)
+# Root-anchored so we don't accidentally ignore tracked subdirs like
+# configs/data/ (config files) or any nested source directories.
 # ---------------------------------------------------------------------------
-data/
-out/
-runs/
-cache/
+/data/
+/out/
+/runs/
+/cache/
 *.zarr/
 *.nc
 *.h5
@@ -55,14 +57,14 @@ cache/
 
 # Tiles / web raster outputs
 *.pmtiles
-tiles/
-pmtiles/
+/tiles/
+/pmtiles/
 
 # Experiment tracking
-wandb/
-mlruns/
-lightning_logs/
-tensorboard/
+/wandb/
+/mlruns/
+/lightning_logs/
+/tensorboard/
 events.out.tfevents.*
 
 # ---------------------------------------------------------------------------
