@@ -25,13 +25,13 @@ default (instead of the JS mock generator). Concretely it:
         - Python ``json.dump`` emits bare ``NaN`` tokens, which are INVALID JSON
           and make the browser ``JSON.parse`` throw. We re-serialize with
           ``allow_nan=False`` after replacing every non-finite value with ``null``.
-        - The precompute per-frame metric proxy currently records all-NaN here
-          (it passes an INCLUDE-mask to validate.per_frame_metrics, whose contract
-          is "True == EXCLUDE"; see the note printed at the end of this script).
-          We RECOMPUTE the per-frame metrics with the correct mask polarity from
-          the real interpolated frames vs the linear-blend-of-bracket reference
-          (the same proxy precompute intends), so the metric strip is populated
-          with genuine values rather than NaN.
+        - The precompute per-frame metric proxy is now correct at the source
+          (``frameflow.precompute._compute_metrics`` passes a ``True==EXCLUDE``
+          mask to ``validate.per_frame_metrics``), so the raw artifact records are
+          already finite. We CARRY THEM THROUGH verbatim (no recompute / no
+          re-inversion), only injecting each frame's ``t`` and promoting ``gmsd``
+          to a top-level key for the web schema — the embedded per-frame metrics
+          are therefore identical to the raw artifact's.
         - Folds the REAL validation headline + baselines from
           ``out/validation/metrics.json`` (trained IFNet vs linear vs TV-L1, on
           the WITHHELD true middle frames) into ``metrics.summary`` /
@@ -82,75 +82,38 @@ def _finite_or_none(v: Any) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Per-frame metric recompute (correct mask polarity)
+# Per-frame metric carry-through (raw metrics are now correct at the source)
 # ---------------------------------------------------------------------------
-def _recompute_per_frame_metrics(src: Path, frames_meta: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Recompute per-frame metrics for interpolated frames from the real ``.nc`` outputs.
+def _carry_per_frame_metrics(
+    raw_per_frame: list[dict[str, Any]], frames_meta: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Carry the precompute artifact's per-frame metrics through to the embed verbatim.
 
-    Reference is the NaN-aware linear blend of the bracketing observed frames at the
-    frame's ``t`` (the same proxy precompute uses). The validate metric mask convention
-    is "True == EXCLUDE", so we pass ``~finite`` (precompute passes ``finite`` — the bug
-    that produces the all-NaN records we are repairing here).
+    ``frameflow.precompute._compute_metrics`` now computes per-frame metrics on VALID pixels
+    (it passes a correct ``True==EXCLUDE`` mask to ``validate.per_frame_metrics``), so the raw
+    ``manifest.json`` records are already finite and authoritative. We do NOT recompute or
+    re-invert anything here (that would risk diverging from the source); we only apply two
+    purely presentational adjustments the web schema wants:
+
+      * inject ``t`` (fractional time) from the matching frame entry, and
+      * promote ``gmsd`` out of ``extra`` to a top-level key (web ``PerFrameMetric.gmsd``).
+
+    The result is metric-for-metric identical to the raw artifact's ``metrics.per_frame``.
     """
-    import numpy as np
-    import xarray as xr
-
-    from frameflow.validate.metrics import per_frame_metrics
-
-    def _read_nc(idx: int) -> np.ndarray | None:
-        p = src / "nc" / f"{idx:03d}.nc"
-        if not p.exists():
-            return None
-        ds = xr.open_dataset(p)
-        try:
-            var = "bt" if "bt" in ds else list(ds.data_vars)[0]
-            arr = np.asarray(ds[var].values, dtype=np.float32)
-        finally:
-            ds.close()
-        return np.squeeze(arr)
-
-    def _blend(a: np.ndarray, b: np.ndarray, t: float) -> np.ndarray:
-        out = (1.0 - t) * a + t * b
-        na, nb = np.isnan(a), np.isnan(b)
-        out = np.where(na & ~nb, b, out)
-        out = np.where(nb & ~na, a, out)
-        return np.where(na & nb, np.nan, out).astype(np.float32)
-
-    by_index = {int(f["index"]): f for f in frames_meta}
+    t_by_index = {int(f["index"]): f.get("t") for f in frames_meta if "index" in f}
     per_frame: list[dict[str, Any]] = []
-    for f in frames_meta:
-        if f.get("kind") != "interpolated":
-            continue
-        bracket = f.get("bracket")
-        if not bracket or len(bracket) != 2:
-            continue
-        idx = int(f["index"])
-        # The bracket indices are ORIGINAL observed indices; map them to the global
-        # frame indices of the two nearest enclosing observed frames in the densified
-        # track (observed frames keep kind="observed").
-        observed_global = [int(g["index"]) for g in frames_meta if g.get("kind") == "observed"]
-        lo_obs, hi_obs = int(bracket[0]), int(bracket[1])
-        if lo_obs >= len(observed_global) or hi_obs >= len(observed_global):
-            continue
-        a = _read_nc(observed_global[lo_obs])
-        b = _read_nc(observed_global[hi_obs])
-        pred = _read_nc(idx)
-        if a is None or b is None or pred is None or a.shape != pred.shape:
-            continue
-        t = float(f.get("t") or 0.5)
-        ref = _blend(a, b, t)
-        exclude = ~(np.isfinite(pred) & np.isfinite(ref))
-        rec = per_frame_metrics(pred, ref, data_range_k=140.0, mask=exclude, index=idx, time=f.get("time"))
-        d = rec.to_dict() if hasattr(rec, "to_dict") else dict(rec)
-        d["index"] = idx
-        d["t"] = round(t, 3)
-        d["time"] = f.get("time")
-        # Promote gmsd out of extra so the web schema (which has a top-level gmsd) sees it.
+    for rec in raw_per_frame:
+        d = dict(rec)
+        idx = int(d.get("index", -1))
+        # Inject the frame's fractional t (presentational; not part of the metric values).
+        t = t_by_index.get(idx)
+        if t is not None:
+            d["t"] = round(float(t), 3)
+        # Promote gmsd out of extra so the web schema (top-level gmsd) sees it.
         extra = d.get("extra") or {}
         if "gmsd" in extra and "gmsd" not in d:
             d["gmsd"] = extra["gmsd"]
         per_frame.append(d)
-    _ = by_index  # (kept for clarity; mapping done via observed_global)
     return per_frame
 
 
@@ -339,8 +302,9 @@ def main() -> int:
     manifest["min_zoom"] = 0
     manifest["max_zoom"] = 0
 
-    # Recompute real per-frame metrics (correct mask polarity) + summary.
-    per_frame = _recompute_per_frame_metrics(src, frames_meta)
+    # Carry the (now-correct) raw per-frame metrics through verbatim + derive their summary.
+    raw_per_frame = manifest.get("metrics", {}).get("per_frame", []) or []
+    per_frame = _carry_per_frame_metrics(raw_per_frame, frames_meta)
     proxy_summary = _summarize(per_frame)
     manifest.setdefault("metrics", {})
     manifest["metrics"]["per_frame"] = per_frame
@@ -394,13 +358,9 @@ def main() -> int:
     total_bytes = sum(p.stat().st_size for p in dst.rglob("*") if p.is_file())
     print("Embedded REAL demo scene ->", dst.relative_to(_REPO_ROOT))
     print(f"  frames={len(frames_meta)}  img={n_img}  thumb={n_thumb}  videos={n_video}  flow={n_flow}")
-    print(f"  per_frame metrics recomputed={len(per_frame)}  baselines={list(manifest['metrics']['baselines'])}")
+    print(f"  per_frame metrics carried through={len(per_frame)}  baselines={list(manifest['metrics']['baselines'])}")
     print(f"  summary={ {k: manifest['metrics']['summary'][k] for k in sorted(manifest['metrics']['summary'])} }")
     print(f"  manifest valid (validate_manifest == []), total embed size = {total_bytes/1024:.0f} KB")
-    print("  NOTE: frameflow/precompute.py:_compute_metrics passes an INCLUDE-mask to")
-    print("        validate.per_frame_metrics (contract: True==EXCLUDE) -> all-NaN per-frame")
-    print("        records in the raw artifact. This script repairs them for the embed; the")
-    print("        precompute bug itself is left for the SERVE+VIZ owner (out of web scope).")
     return 0
 
 

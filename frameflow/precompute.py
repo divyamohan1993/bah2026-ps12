@@ -493,10 +493,14 @@ def _compute_metrics(
         # Reference: linear blend of the bracketing observed frames (baseline truth proxy).
         ref = _linear_blend(observed[i], observed[j], t)
         pred = np.asarray(fr, dtype=np.float32)
-        mask = np.isfinite(pred) & np.isfinite(ref)
+        # validate.per_frame_metrics / compute_metrics use a TRUE==EXCLUDE mask convention,
+        # so pass the EXCLUDE-mask (non-finite pixels), NOT the finite/include-mask. Passing
+        # the include-mask inverts the polarity and excludes every valid pixel -> all-NaN.
+        valid = np.isfinite(pred) & np.isfinite(ref)
+        exclude = ~valid
         if validate_fn is not None:
             try:  # pragma: no cover - depends on Team VALIDATE
-                rec = validate_fn(pred, ref, data_range_k=data_range_k, mask=mask)
+                rec = validate_fn(pred, ref, data_range_k=data_range_k, mask=exclude)
                 d = rec.to_dict() if hasattr(rec, "to_dict") else dict(rec)
                 d["index"] = idx
                 d.setdefault("time", iso_times[idx] if idx < len(iso_times) else None)
@@ -504,7 +508,8 @@ def _compute_metrics(
                 continue
             except Exception:
                 pass
-        per_frame.append(_builtin_metrics(pred, ref, mask, idx, iso_times, data_range_k))
+        # _builtin_metrics uses an INCLUDE-mask (pred[mask]) -> pass `valid`, not `exclude`.
+        per_frame.append(_builtin_metrics(pred, ref, valid, idx, iso_times, data_range_k))
 
     summary = _summarize(per_frame)
     return {

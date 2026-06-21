@@ -14,7 +14,7 @@ Means over the withheld true intermediate frames. All full-reference metrics use
 
 | method | psnr | ssim | ms_ssim | fsim | bt_rmse_k |
 |---|---|---|---|---|---|
-| trained_ifnet | 26.3880 | 0.9290 | 0.9115 | 0.9606 | 6.7958 |
+| trained_ifnet | 26.3670 | 0.9290 | 0.9119 | 0.9604 | 6.8121 |
 | linear | 26.1937 | 0.8893 | 0.8724 | 0.9540 | 6.9671 |
 | tvl1 | 25.5260 | 0.8886 | 0.8722 | 0.9509 | 7.5023 |
 

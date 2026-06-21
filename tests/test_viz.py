@@ -428,3 +428,51 @@ def test_precompute_scene_with_injected_model(tmp_path: Path) -> None:
     # Metrics were computed for the interpolated frames against the fixed-K range (P1).
     assert manifest["metrics"]["data_range_k"] == pytest.approx(C.BT_DATA_RANGE_K)
     assert len(manifest["metrics"]["per_frame"]) == result.n_interpolated
+
+
+def _offset_runner(i0: np.ndarray, i1: np.ndarray, t: float) -> np.ndarray:
+    """Linear-blend stand-in with a small constant Kelvin offset.
+
+    The offset makes the prediction differ from the precompute reference (the NaN-aware
+    linear blend of the bracket), so the per-frame metrics are FINITE *and* non-trivial
+    (bt_rmse_k > 0, finite PSNR) rather than the perfect-match degenerate case.
+    """
+    a = np.asarray(i0, dtype=np.float32)
+    b = np.asarray(i1, dtype=np.float32)
+    return ((1.0 - t) * a + t * b + np.float32(1.5)).astype(np.float32)
+
+
+def test_precompute_scene_per_frame_metrics_are_finite(tmp_path: Path) -> None:
+    """REGRESSION: precompute must pass an EXCLUDE-mask to validate.per_frame_metrics.
+
+    The mask contract of :func:`frameflow.validate.metrics.per_frame_metrics` is
+    ``True == EXCLUDE``. ``_compute_metrics`` previously passed the *finite/include*-mask,
+    which inverted the polarity and excluded EVERY valid pixel -> all-NaN per-frame records
+    in the raw ``manifest.json``. This test densifies a synthetic cube with a tiny injected
+    model and asserts every interpolated frame's metrics are FINITE and sensible. It fails
+    (all-NaN) if the include/exclude polarity ever regresses.
+    """
+    import math
+
+    from frameflow.precompute import precompute_scene
+
+    cube = _make_cube(tmp_path, n_frames=3, n=20)
+    out_dir = tmp_path / "artifacts" / "finite"
+    result = precompute_scene(
+        cube, model=_offset_runner, out_dir=out_dir, factor=2,
+        scene_id="finite", make_video=False,
+    )
+
+    per_frame = json.loads(result.manifest_path.read_text())["metrics"]["per_frame"]
+    assert len(per_frame) == result.n_interpolated >= 1
+
+    for rec in per_frame:
+        # The core full-reference + Kelvin metrics must all be present and FINITE (not NaN).
+        for key in ("psnr", "ssim", "ms_ssim", "mse", "rmse", "mae", "bt_rmse_k", "bt_bias_k"):
+            v = rec.get(key)
+            assert isinstance(v, (int, float)), f"{key} missing/None: {rec!r}"
+            assert math.isfinite(float(v)), f"{key} is non-finite ({v}) -> mask polarity bug"
+        # Sanity bounds: SSIM in [0,1]; the constant +1.5 K offset shows up as real error.
+        assert 0.0 <= float(rec["ssim"]) <= 1.0
+        assert float(rec["bt_rmse_k"]) > 0.0, "non-trivial prediction must have bt_rmse_k > 0"
+        assert float(rec["psnr"]) > 0.0
