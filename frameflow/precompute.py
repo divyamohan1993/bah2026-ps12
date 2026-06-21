@@ -139,6 +139,15 @@ def _runner_from_model(model: Any) -> ModelRunner | None:
 
     Accepts a torch-style ``VFIModel`` (``forward(I0,I1,t)`` with ``(B,1,H,W)`` and ``t``
     shaped ``(B,1)``, honouring P2-ONNX) or any plain ``callable(I0_2d, I1_2d, t)``.
+
+    For the torch path the model expects **normalized** ``[0,1]`` input (the same convention
+    Team MODELS trains on and Team INFER's :func:`frameflow.infer.interpolate.interpolate_pair`
+    uses): Kelvin frames are scaled to ``[0,1]`` with the FIXED norm span
+    (:data:`constants.BT_NORM_VMIN_K` .. :data:`constants.BT_NORM_VMAX_K`, NaN-safe) before
+    ``forward`` and the prediction is mapped back to Kelvin afterwards, restoring the input
+    NaN (off-disk) mask. Passing raw Kelvin straight into the network produces NaN/garbage,
+    so this normalization is REQUIRED for the densified track to be valid. The plain-callable
+    branch is treated as already operating in Kelvin and is left untouched.
     """
     if model is None:
         return None
@@ -153,9 +162,16 @@ def _runner_from_model(model: Any) -> ModelRunner | None:
             raise TypeError("model has no .forward and is not callable")
         import torch
 
+        a = np.asarray(i0, dtype=np.float32)
+        b = np.asarray(i1, dtype=np.float32)
+        # Off-disk mask to restore after denorm (union of both inputs' NaNs).
+        nan_mask = ~np.isfinite(a) | ~np.isfinite(b)
+        a01 = _norm_k_to_unit(a)
+        b01 = _norm_k_to_unit(b)
+
         with torch.no_grad():
-            x0 = torch.as_tensor(np.asarray(i0, dtype=np.float32))[None, None]
-            x1 = torch.as_tensor(np.asarray(i1, dtype=np.float32))[None, None]
+            x0 = torch.as_tensor(a01)[None, None]
+            x1 = torch.as_tensor(b01)[None, None]
             tt = torch.as_tensor([[float(t)]], dtype=torch.float32)  # (B,1) leading batch dim
             out = forward(x0, x1, tt)
             # MODELS registry returns a dict ({"pred",...}); forward_with_flow returns a
@@ -165,9 +181,48 @@ def _runner_from_model(model: Any) -> ModelRunner | None:
             elif isinstance(out, (tuple, list)):
                 out = out[0]
             out = out.detach().cpu().numpy()
-        return np.squeeze(out).astype(np.float32)
+        pred01 = np.squeeze(out).astype(np.float32)
+        pred_k = _denorm_unit_to_k(pred01)
+        if pred_k.shape == nan_mask.shape:
+            pred_k = np.where(nan_mask, np.nan, pred_k)
+        return pred_k.astype(np.float32)
 
     return _run
+
+
+def _norm_k_to_unit(a: np.ndarray) -> np.ndarray:
+    """Kelvin -> ``[0,1]`` for model input, NaN-SAFE (Team DATA's ``normalize`` if available).
+
+    The VFI conv stack propagates NaN across its receptive field, so off-disk NaNs MUST be
+    filled before the model sees them (the input mask is restored after denorm in ``_run``).
+    """
+    import numpy as np
+
+    arr = np.asarray(a, dtype=np.float32)
+    try:  # prefer the canonical Team DATA normalizer (fixed-range, NaN-safe) if it exists
+        from .data.preprocess import normalize as _nm  # type: ignore
+
+        x = np.asarray(_nm(arr), dtype=np.float32)
+    except Exception:
+        vmin, vmax = float(C.BT_NORM_VMIN_K), float(C.BT_NORM_VMAX_K)
+        span = max(vmax - vmin, 1e-6)
+        x = (arr - vmin) / span
+    # Guarantee finiteness for the network regardless of the normalizer's NaN policy.
+    return np.nan_to_num(x.astype(np.float32), nan=0.0, posinf=1.0, neginf=0.0)
+
+
+def _denorm_unit_to_k(x: np.ndarray) -> np.ndarray:
+    """``[0,1]`` -> Kelvin for model output (inverse of :func:`_norm_k_to_unit`)."""
+    import numpy as np
+
+    try:
+        from .data.preprocess import denormalize as _dn  # type: ignore
+
+        return np.asarray(_dn(x), dtype=np.float32)
+    except Exception:
+        vmin, vmax = float(C.BT_NORM_VMIN_K), float(C.BT_NORM_VMAX_K)
+        span = max(vmax - vmin, 1e-6)
+        return (np.asarray(x, dtype=np.float32) * span + vmin).astype(np.float32)
 
 
 def _linear_blend(i0: np.ndarray, i1: np.ndarray, t: float) -> np.ndarray:
@@ -253,8 +308,10 @@ def _model_flow(model: Any, i0: np.ndarray, i1: np.ndarray, t: float) -> np.ndar
         return None
     try:
         with torch.no_grad():
-            x0 = torch.as_tensor(np.asarray(i0, dtype=np.float32))[None, None]
-            x1 = torch.as_tensor(np.asarray(i1, dtype=np.float32))[None, None]
+            # Normalize Kelvin -> [0,1] (NaN-safe): the conv stack produces NaN flow on raw
+            # Kelvin / NaN input, which would empty the overlay (same convention as _run).
+            x0 = torch.as_tensor(_norm_k_to_unit(np.asarray(i0, dtype=np.float32)))[None, None]
+            x1 = torch.as_tensor(_norm_k_to_unit(np.asarray(i1, dtype=np.float32)))[None, None]
             tt = torch.as_tensor([[float(t)]], dtype=torch.float32)
             flow = None
             fwf = getattr(model, "forward_with_flow", None)

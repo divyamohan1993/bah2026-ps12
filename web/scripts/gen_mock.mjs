@@ -586,7 +586,22 @@ function main() {
   console.log('FrameFlow mock-data generator');
   ensureDir(DATA_DIR);
 
-  const index = { scenes: [] };
+  // Preserve any pre-existing NON-mock scenes (e.g. the embedded real scene
+  // demo-0001 produced by scripts/embed_demo_scene.py) so regenerating the mock
+  // does not drop the real scene from the selector. Real scenes are listed FIRST.
+  const mockIds = new Set(SCENES.map((s) => s.id));
+  let preserved = [];
+  const scenesPath = path.join(DATA_DIR, 'scenes.json');
+  if (fs.existsSync(scenesPath)) {
+    try {
+      const prev = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
+      preserved = (prev.scenes || []).filter((s) => !mockIds.has(s.scene_id));
+    } catch {
+      preserved = [];
+    }
+  }
+
+  const index = { scenes: [...preserved] };
   for (const scene of SCENES) {
     process.stdout.write(`  · scene "${scene.id}" … `);
     const r = buildScene(scene);
@@ -594,8 +609,12 @@ function main() {
     console.log(`${r.frames} frames (${r.interp} interpolated)`);
   }
 
-  fs.writeFileSync(path.join(DATA_DIR, 'scenes.json'), JSON.stringify(index, null, 2));
-  console.log(`  · wrote scenes.json (${index.scenes.length} scenes)`);
+  fs.writeFileSync(scenesPath, JSON.stringify(index, null, 2));
+  console.log(
+    `  · wrote scenes.json (${index.scenes.length} scenes` +
+      (preserved.length ? `, preserved ${preserved.length} real` : '') +
+      ')',
+  );
   console.log(`Done -> ${path.relative(ROOT, DATA_DIR)}`);
 }
 

@@ -38,7 +38,10 @@ export interface AppState {
 }
 
 const initialState: AppState = {
-  sceneId: 'cyclone-atlantic',
+  // Default to the REAL precomputed scene embedded under public/data/demo-0001
+  // (genuine IFNet output from `make demo` + scripts/embed_demo_scene.py). The mock
+  // scenes (cyclone-atlantic, synthetic-demo) are only present after `npm run mock`.
+  sceneId: 'demo-0001',
   frameIndex: 0,
   isPlaying: false,
   speed: 1,

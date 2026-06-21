@@ -1,0 +1,966 @@
+{
+  "version": "1.0",
+  "scene_id": "demo-0001",
+  "title": "GOES-19 \u00b7 Real IFNet demo (synthetic-trained)",
+  "satellite": "GOES-19",
+  "channel": "C13",
+  "wavelength_um": 10.3,
+  "bbox": [
+    68.0,
+    6.0,
+    98.0,
+    38.0
+  ],
+  "crs": "EPSG:4326",
+  "colormap": "ir_clouds",
+  "value_range_k": [
+    180.0,
+    320.0
+  ],
+  "tile_size": 256,
+  "min_zoom": 0,
+  "max_zoom": 0,
+  "interpolation_factor": 2,
+  "cadence_minutes_input": 30.0,
+  "cadence_minutes_output": 15.0,
+  "frames": [
+    {
+      "index": 0,
+      "time": "2025-06-20T00:00:00Z",
+      "kind": "observed",
+      "image": "img/000.webp",
+      "thumb": "thumb/000.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/000.nc",
+      "t": null,
+      "bracket": null,
+      "flow_overlay": null
+    },
+    {
+      "index": 1,
+      "time": "2025-06-20T00:15:00Z",
+      "kind": "interpolated",
+      "image": "img/001.webp",
+      "thumb": "thumb/001.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/001.nc",
+      "t": 0.5,
+      "bracket": [
+        0,
+        1
+      ],
+      "flow_overlay": "flow/001.json"
+    },
+    {
+      "index": 2,
+      "time": "2025-06-20T00:30:00Z",
+      "kind": "observed",
+      "image": "img/002.webp",
+      "thumb": "thumb/002.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/002.nc",
+      "t": null,
+      "bracket": null,
+      "flow_overlay": null
+    },
+    {
+      "index": 3,
+      "time": "2025-06-20T00:45:00Z",
+      "kind": "interpolated",
+      "image": "img/003.webp",
+      "thumb": "thumb/003.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/003.nc",
+      "t": 0.5,
+      "bracket": [
+        1,
+        2
+      ],
+      "flow_overlay": "flow/003.json"
+    },
+    {
+      "index": 4,
+      "time": "2025-06-20T01:00:00Z",
+      "kind": "observed",
+      "image": "img/004.webp",
+      "thumb": "thumb/004.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/004.nc",
+      "t": null,
+      "bracket": null,
+      "flow_overlay": null
+    },
+    {
+      "index": 5,
+      "time": "2025-06-20T01:15:00Z",
+      "kind": "interpolated",
+      "image": "img/005.webp",
+      "thumb": "thumb/005.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/005.nc",
+      "t": 0.5,
+      "bracket": [
+        2,
+        3
+      ],
+      "flow_overlay": "flow/005.json"
+    },
+    {
+      "index": 6,
+      "time": "2025-06-20T01:30:00Z",
+      "kind": "observed",
+      "image": "img/006.webp",
+      "thumb": "thumb/006.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/006.nc",
+      "t": null,
+      "bracket": null,
+      "flow_overlay": null
+    },
+    {
+      "index": 7,
+      "time": "2025-06-20T01:45:00Z",
+      "kind": "interpolated",
+      "image": "img/007.webp",
+      "thumb": "thumb/007.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/007.nc",
+      "t": 0.5,
+      "bracket": [
+        3,
+        4
+      ],
+      "flow_overlay": "flow/007.json"
+    },
+    {
+      "index": 8,
+      "time": "2025-06-20T02:00:00Z",
+      "kind": "observed",
+      "image": "img/008.webp",
+      "thumb": "thumb/008.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/008.nc",
+      "t": null,
+      "bracket": null,
+      "flow_overlay": null
+    },
+    {
+      "index": 9,
+      "time": "2025-06-20T02:15:00Z",
+      "kind": "interpolated",
+      "image": "img/009.webp",
+      "thumb": "thumb/009.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/009.nc",
+      "t": 0.5,
+      "bracket": [
+        4,
+        5
+      ],
+      "flow_overlay": "flow/009.json"
+    },
+    {
+      "index": 10,
+      "time": "2025-06-20T02:30:00Z",
+      "kind": "observed",
+      "image": "img/010.webp",
+      "thumb": "thumb/010.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/010.nc",
+      "t": null,
+      "bracket": null,
+      "flow_overlay": null
+    },
+    {
+      "index": 11,
+      "time": "2025-06-20T02:45:00Z",
+      "kind": "interpolated",
+      "image": "img/011.webp",
+      "thumb": "thumb/011.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/011.nc",
+      "t": 0.5,
+      "bracket": [
+        5,
+        6
+      ],
+      "flow_overlay": "flow/011.json"
+    },
+    {
+      "index": 12,
+      "time": "2025-06-20T03:00:00Z",
+      "kind": "observed",
+      "image": "img/012.webp",
+      "thumb": "thumb/012.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/012.nc",
+      "t": null,
+      "bracket": null,
+      "flow_overlay": null
+    },
+    {
+      "index": 13,
+      "time": "2025-06-20T03:15:00Z",
+      "kind": "interpolated",
+      "image": "img/013.webp",
+      "thumb": "thumb/013.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/013.nc",
+      "t": 0.5,
+      "bracket": [
+        6,
+        7
+      ],
+      "flow_overlay": "flow/013.json"
+    },
+    {
+      "index": 14,
+      "time": "2025-06-20T03:30:00Z",
+      "kind": "observed",
+      "image": "img/014.webp",
+      "thumb": "thumb/014.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/014.nc",
+      "t": null,
+      "bracket": null,
+      "flow_overlay": null
+    },
+    {
+      "index": 15,
+      "time": "2025-06-20T03:45:00Z",
+      "kind": "interpolated",
+      "image": "img/015.webp",
+      "thumb": "thumb/015.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/015.nc",
+      "t": 0.5,
+      "bracket": [
+        7,
+        8
+      ],
+      "flow_overlay": "flow/015.json"
+    },
+    {
+      "index": 16,
+      "time": "2025-06-20T04:00:00Z",
+      "kind": "observed",
+      "image": "img/016.webp",
+      "thumb": "thumb/016.webp",
+      "tiles_url_template": null,
+      "pmtiles": null,
+      "netcdf": "nc/016.nc",
+      "t": null,
+      "bracket": null,
+      "flow_overlay": null
+    }
+  ],
+  "videos": {
+    "observed": "videos/observed.mp4",
+    "interpolated": "videos/interpolated.mp4",
+    "side_by_side": "videos/side_by_side.mp4"
+  },
+  "metrics": {
+    "data_range_k": 140.0,
+    "value_range_k": [
+      180.0,
+      320.0
+    ],
+    "per_frame": [
+      {
+        "index": 1,
+        "time": "2025-06-20T00:15:00Z",
+        "psnr": 31.368702923264284,
+        "ssim": 0.9650975465774536,
+        "ms_ssim": 0.9646931886672974,
+        "fsim": 0.9715666770935059,
+        "mse": 0.000729675404727459,
+        "rmse": 0.027012504599304727,
+        "mae": 0.010185303166508675,
+        "bt_rmse_k": 3.7817506790161133,
+        "bt_bias_k": -0.19169051945209503,
+        "epe": null,
+        "csi_235k": null,
+        "fss": null,
+        "lpips": null,
+        "extra": {
+          "gmsd": 0.05945415422320366
+        },
+        "t": 0.5,
+        "gmsd": 0.05945415422320366
+      },
+      {
+        "index": 3,
+        "time": "2025-06-20T00:45:00Z",
+        "psnr": 31.455730399645745,
+        "ssim": 0.9736602902412415,
+        "ms_ssim": 0.9821932315826416,
+        "fsim": 0.9791795015335083,
+        "mse": 0.0007151991012506187,
+        "rmse": 0.02674320663739894,
+        "mae": 0.010464458726346493,
+        "bt_rmse_k": 3.744049072265625,
+        "bt_bias_k": -0.30914106965065,
+        "epe": null,
+        "csi_235k": null,
+        "fss": null,
+        "lpips": null,
+        "extra": {
+          "gmsd": 0.05665527284145355
+        },
+        "t": 0.5,
+        "gmsd": 0.05665527284145355
+      },
+      {
+        "index": 5,
+        "time": "2025-06-20T01:15:00Z",
+        "psnr": 30.743581078997195,
+        "ssim": 0.9674938321113586,
+        "ms_ssim": 0.969253659248352,
+        "fsim": 0.9784528017044067,
+        "mse": 0.0008426396525464952,
+        "rmse": 0.029028256105844443,
+        "mae": 0.012977554462850094,
+        "bt_rmse_k": 4.063955783843994,
+        "bt_bias_k": -0.26925337314605713,
+        "epe": null,
+        "csi_235k": null,
+        "fss": null,
+        "lpips": null,
+        "extra": {
+          "gmsd": 0.06352236121892929
+        },
+        "t": 0.5,
+        "gmsd": 0.06352236121892929
+      },
+      {
+        "index": 7,
+        "time": "2025-06-20T01:45:00Z",
+        "psnr": 31.715807668608264,
+        "ssim": 0.9828490614891052,
+        "ms_ssim": 0.9849496483802795,
+        "fsim": 0.9865869283676147,
+        "mse": 0.0006736266077496111,
+        "rmse": 0.02595431770919072,
+        "mae": 0.009976495988667011,
+        "bt_rmse_k": 3.6336045265197754,
+        "bt_bias_k": -0.18425045907497406,
+        "epe": null,
+        "csi_235k": null,
+        "fss": null,
+        "lpips": null,
+        "extra": {
+          "gmsd": 0.04888524115085602
+        },
+        "t": 0.5,
+        "gmsd": 0.04888524115085602
+      },
+      {
+        "index": 9,
+        "time": "2025-06-20T02:15:00Z",
+        "psnr": 30.41808264840157,
+        "ssim": 0.963901937007904,
+        "ms_ssim": 0.9672859311103821,
+        "fsim": 0.9813680052757263,
+        "mse": 0.0009082214091904461,
+        "rmse": 0.030136711983732502,
+        "mae": 0.014216892421245575,
+        "bt_rmse_k": 4.219139575958252,
+        "bt_bias_k": -0.14984510838985443,
+        "epe": null,
+        "csi_235k": null,
+        "fss": null,
+        "lpips": null,
+        "extra": {
+          "gmsd": 0.05843198299407959
+        },
+        "t": 0.5,
+        "gmsd": 0.05843198299407959
+      },
+      {
+        "index": 11,
+        "time": "2025-06-20T02:45:00Z",
+        "psnr": 31.744687152374887,
+        "ssim": 0.9806134700775146,
+        "ms_ssim": 0.987667441368103,
+        "fsim": 0.9877591729164124,
+        "mse": 0.0006691620219498873,
+        "rmse": 0.02586816618838466,
+        "mae": 0.011501251719892025,
+        "bt_rmse_k": 3.6215431690216064,
+        "bt_bias_k": 0.04927853122353554,
+        "epe": null,
+        "csi_235k": null,
+        "fss": null,
+        "lpips": null,
+        "extra": {
+          "gmsd": 0.05386880040168762
+        },
+        "t": 0.5,
+        "gmsd": 0.05386880040168762
+      },
+      {
+        "index": 13,
+        "time": "2025-06-20T03:15:00Z",
+        "psnr": 31.069219155413116,
+        "ssim": 0.9738066792488098,
+        "ms_ssim": 0.97343510389328,
+        "fsim": 0.9840221405029297,
+        "mse": 0.0007817683508619666,
+        "rmse": 0.027960120723308165,
+        "mae": 0.013209537602961063,
+        "bt_rmse_k": 3.914416790008545,
+        "bt_bias_k": 0.09095143526792526,
+        "epe": null,
+        "csi_235k": null,
+        "fss": null,
+        "lpips": null,
+        "extra": {
+          "gmsd": 0.057795386761426926
+        },
+        "t": 0.5,
+        "gmsd": 0.057795386761426926
+      },
+      {
+        "index": 15,
+        "time": "2025-06-20T03:45:00Z",
+        "psnr": 31.268600210846976,
+        "ssim": 0.9767733812332153,
+        "ms_ssim": 0.9769342541694641,
+        "fsim": 0.9837250709533691,
+        "mse": 0.0007466893875971437,
+        "rmse": 0.027325617789853235,
+        "mae": 0.012750083580613136,
+        "bt_rmse_k": 3.8255863189697266,
+        "bt_bias_k": 0.39209094643592834,
+        "epe": null,
+        "csi_235k": null,
+        "fss": null,
+        "lpips": null,
+        "extra": {
+          "gmsd": 0.051672957837581635
+        },
+        "t": 0.5,
+        "gmsd": 0.051672957837581635
+      }
+    ],
+    "summary": {
+      "ms_ssim_mean": 0.9115,
+      "fsim_mean": 0.9606,
+      "mae_mean": 0.0119,
+      "bt_bias_k_mean": -0.0715,
+      "psnr_mean": 26.388,
+      "rmse_mean": 0.0275,
+      "gmsd_mean": 0.0563,
+      "mse_mean": 0.0008,
+      "ssim_mean": 0.929,
+      "bt_rmse_k_mean": 6.7958,
+      "t_mean": 0.5
+    },
+    "baselines": {
+      "linear": {
+        "name": "Linear blend",
+        "psnr": 26.1937,
+        "ssim": 0.8893,
+        "ms_ssim": 0.8724,
+        "bt_rmse_k": 6.9671,
+        "fsim": 0.954
+      },
+      "tvl1": {
+        "name": "TV-L1 + warp",
+        "psnr": 25.526,
+        "ssim": 0.8886,
+        "ms_ssim": 0.8722,
+        "bt_rmse_k": 7.5023,
+        "fsim": 0.9509
+      }
+    }
+  },
+  "crossval": {
+    "methods_run": [
+      {
+        "method_id": "M1",
+        "name": "Leave-the-middle-frame-out (dense GOES-19, PRIMARY)",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "A",
+          "description": "Predict the real middle frame from its two neighbours; full FR/BT metric suite vs withheld truth.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M2",
+        "name": "Leave-the-middle-frame-out (Himawari, independent dense source)",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "A",
+          "description": "Same exact-match protocol on a second independent dense sensor (Asia/India-facing).",
+          "applicability": "Himawari AHI B13 dense cube",
+          "requires": "Himawari AHI B13 dense cube"
+        }
+      },
+      {
+        "method_id": "M3",
+        "name": "Multi-step recursion vs direct (2x/4x/8x)",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "A",
+          "description": "Hold out the real frames for 30->15/7.5/3.75 min densification; test error vs up-sampling factor.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M4",
+        "name": "Recursion-depth / error-accumulation test",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "A",
+          "description": "Recursive halving (interp-the-interp) vs single-shot; quantify metric decay per recursion level.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M5",
+        "name": "Asymmetric-interval test (off-centre t)",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "A",
+          "description": "Predict off-centre fractions (t=0.25/0.75), not just the midpoint, to check t-generalization.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M6",
+        "name": "Long-gap stress test",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "A",
+          "description": "Feed widely-spaced frames and predict several intervening real frames (simulates coarse INSAT cadence).",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M7",
+        "name": "GOES + Himawari overlap (Pacific)",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "B",
+          "description": "Validate one satellite's interpolation against the other's near-simultaneous observation.",
+          "applicability": "GOES-19 + Himawari overlap (GSICS inter-cal)",
+          "requires": "GOES-19 + Himawari overlap (GSICS inter-cal)"
+        }
+      },
+      {
+        "method_id": "M8",
+        "name": "INSAT + Himawari overlap (Indian Ocean)",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "B",
+          "description": "Validate INSAT interpolation against Himawari's denser real frames \u2014 the key 'fill-the-gap' check.",
+          "applicability": "INSAT-3DS/3DR + Himawari overlap",
+          "requires": "INSAT-3DS/3DR + Himawari overlap"
+        }
+      },
+      {
+        "method_id": "M9",
+        "name": "INSAT vs GOES / three-way common scene",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "B",
+          "description": "Pairwise interpolation-vs-other-observation where any two-of-three see a common scene.",
+          "applicability": "INSAT + GOES common-scene overlap",
+          "requires": "INSAT + GOES common-scene overlap"
+        }
+      },
+      {
+        "method_id": "M10",
+        "name": "Cross-satellite consistency of derived motion",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "B",
+          "description": "Compare optical-flow fields estimated independently from two satellites over the overlap.",
+          "applicability": "two-satellite overlap",
+          "requires": "two-satellite overlap"
+        }
+      },
+      {
+        "method_id": "M11",
+        "name": "Inter-calibration (GSICS) pre-step + sanity check",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "B",
+          "description": "Apply/verify GSICS BT inter-cal before cross-comparison; ~0.3 K floor is the reference.",
+          "applicability": "multi-satellite (GSICS coefficients)",
+          "requires": "multi-satellite (GSICS coefficients)"
+        }
+      },
+      {
+        "method_id": "M12",
+        "name": "MODIS (Terra/Aqua) overpass collocation",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "C",
+          "description": "Compare the geostationary frame nearest a MODIS overpass to MODIS Band-31 (~11 \u00b5m) BT.",
+          "applicability": "MODIS Band-31 overpasses",
+          "requires": "MODIS Band-31 overpasses"
+        }
+      },
+      {
+        "method_id": "M13",
+        "name": "VIIRS (SNPP/NOAA-20/21) overpass collocation",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "C",
+          "description": "Same idea with VIIRS M15/I5 TIR \u2014 more overpasses, fills MODIS temporal gaps.",
+          "applicability": "VIIRS M15/I5 overpasses",
+          "requires": "VIIRS M15/I5 overpasses"
+        }
+      },
+      {
+        "method_id": "M14",
+        "name": "Polar-orbiter truth at INTERPOLATED timestamps",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "C",
+          "description": "Where a LEO overpass lands between two GEO acquisitions, validate the SYNTHETIC frame directly.",
+          "applicability": "LEO overpasses at synthesized times",
+          "requires": "LEO overpasses at synthesized times"
+        }
+      },
+      {
+        "method_id": "M15",
+        "name": "Triple collocation (TC)",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "D",
+          "description": "Three independent BT estimates -> absolute random-error variance of each, no perfect truth assumed.",
+          "applicability": "three independent co-located sensors",
+          "requires": "three independent co-located sensors"
+        }
+      },
+      {
+        "method_id": "M16",
+        "name": "N-way / quadruple collocation extension",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "D",
+          "description": "Add a 4th source (NWP/2nd LEO) to relax TC assumptions and cross-check error correlation.",
+          "applicability": "four independent sources",
+          "requires": "four independent sources"
+        }
+      },
+      {
+        "method_id": "M17",
+        "name": "Error-variance budget consistency",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "D",
+          "description": "Verify the TC-derived interpolation error variance is consistent across regions/seasons.",
+          "applicability": "multi-region collocations",
+          "requires": "multi-region collocations"
+        }
+      },
+      {
+        "method_id": "M18",
+        "name": "Naive frame-copy baseline (persistence)",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "E",
+          "description": "Repeat frame0 as the 'interpolated' frame; any real method MUST beat this on every metric.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M19",
+        "name": "Linear-blend baseline",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "E",
+          "description": "0.5*(frame0+frame2) ghosting baseline; must be beaten especially on FSIM/PSD/blur.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M20",
+        "name": "Classical optical-flow baselines (Farneback & TV-L1)",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "E",
+          "description": "OpenCV flow-warp baselines; show the AI beats classical flow on motion and edge sharpness.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M21",
+        "name": "DL VFI backbones head-to-head",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "E",
+          "description": "RIFE vs Super-SloMo vs FILM/IFRNet/AMT on identical data -> ranked table to pick the best.",
+          "applicability": "multiple trained VFI checkpoints",
+          "requires": "multiple trained VFI checkpoints"
+        }
+      },
+      {
+        "method_id": "M22",
+        "name": "Ablation: with vs without explicit optical flow",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "E",
+          "description": "Does the flow module help vs a pure CNN/transformer interpolator? Quantify the contribution.",
+          "applicability": "two model variants",
+          "requires": "two model variants"
+        }
+      },
+      {
+        "method_id": "M23",
+        "name": "Ablation: flow-backbone swap (RAFT vs PWC vs TV-L1)",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "E",
+          "description": "Sensitivity of results to the flow estimator inside the pipeline.",
+          "applicability": "model variants w/ swappable flow",
+          "requires": "model variants w/ swappable flow"
+        }
+      },
+      {
+        "method_id": "M24",
+        "name": "Ablation: loss / warping choices",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "E",
+          "description": "Forward vs backward warp, refine-net on/off, perceptual-loss on/off vs validation metrics.",
+          "applicability": "models trained w/ different losses",
+          "requires": "models trained w/ different losses"
+        }
+      },
+      {
+        "method_id": "M25",
+        "name": "Ablation: input normalization / radiometric pre-processing",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "E",
+          "description": "With/without histogram normalization, Kelvin vs DN input -> robustness of the result.",
+          "applicability": "model variants w/ different norm",
+          "requires": "model variants w/ different norm"
+        }
+      },
+      {
+        "method_id": "M26",
+        "name": "Extreme-motion stratification (cyclones / deep convection)",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "F",
+          "description": "Bin test cases by motion magnitude (from flow); report metrics fast-vs-slow scenes.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M27",
+        "name": "Phenomenon stratification (cyclone/thunderstorm/fire/flood/clear)",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "F",
+          "description": "Per-phenomenon metric tables for the PS-named phenomena.",
+          "applicability": "labelled phenomenon cases",
+          "requires": "labelled phenomenon cases"
+        }
+      },
+      {
+        "method_id": "M28",
+        "name": "Per-region stratification",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "F",
+          "description": "Tropics vs mid-latitude, land vs ocean, India vs Pacific -> geographic bias map.",
+          "applicability": "multi-region data",
+          "requires": "multi-region data"
+        }
+      },
+      {
+        "method_id": "M29",
+        "name": "Per-season / diurnal stratification",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "F",
+          "description": "Monsoon vs dry, day vs night (TIR works at night) -> no diurnal bias.",
+          "applicability": "multi-season/diurnal data",
+          "requires": "multi-season/diurnal data"
+        }
+      },
+      {
+        "method_id": "M30",
+        "name": "Cloud-regime stratification by BT bands",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "F",
+          "description": "Separate metrics for warm/clear, mid, and cold (convective) BT ranges.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M31",
+        "name": "Error-vs-cloud-speed correlation",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "G",
+          "description": "Regress per-frame error against estimated cloud speed; report R^2 (characterizes motion limits).",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M32",
+        "name": "Error-vs-lead-fraction / vs up-sampling-factor correlation",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "G",
+          "description": "Error as a function of distance from the nearest real frame (t=0.5 hardest) and of 2x/4x/8x.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M33",
+        "name": "Radially-averaged PSD ratio (fine-scale fidelity)",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "G",
+          "description": "2-D FFT -> radial PSD; PSD_pred/PSD_truth vs wavenumber proves fine-scale structure preservation.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M34",
+        "name": "Wavelet multi-resolution fidelity",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "G",
+          "description": "2-D DWT energy per sub-band, pred vs truth \u2014 scale-localized structure check (needs pywt).",
+          "applicability": "synthetic-dense (pywt)",
+          "requires": "synthetic-dense (pywt)"
+        }
+      },
+      {
+        "method_id": "M35",
+        "name": "Statistical-significance testing (Wilcoxon + bootstrap CI)",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "G",
+          "description": "Paired Wilcoxon AI-vs-baseline per metric + bootstrap 95% CIs on mean PSNR/SSIM/BT-RMSE.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M36",
+        "name": "Inter-metric agreement / rank-correlation matrix",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "G",
+          "description": "Spearman correlation between metrics across all test frames; confirms multi-metric consensus.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M37",
+        "name": "Multi-band consistency",
+        "status": "skipped",
+        "summary": {},
+        "details": {
+          "category": "H",
+          "description": "Interpolate TIR1 and TIR2/WV; check inter-band relationships (split-window) are preserved.",
+          "applicability": "multi-band data",
+          "requires": "multi-band data"
+        }
+      },
+      {
+        "method_id": "M38",
+        "name": "Mass/feature conservation & physical-plausibility",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "H",
+          "description": "Total cold-cloud area and domain-mean BT must evolve smoothly through inserted frames.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M39",
+        "name": "Temporal-consistency at the seams",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "H",
+          "description": "Test the boundary between a real frame and an inserted frame for flicker/discontinuities.",
+          "applicability": "synthetic-dense"
+        }
+      },
+      {
+        "method_id": "M40",
+        "name": "Dual-implementation metric verification + fixed-seed reproducibility",
+        "status": "run",
+        "summary": {},
+        "details": {
+          "category": "H",
+          "description": "Every metric computed by two libraries and asserted equal (skimage vs piq); pinned seeds.",
+          "applicability": "synthetic-dense (scikit-image optional)"
+        }
+      }
+    ]
+  },
+  "generated": "2026-06-20T23:55:34Z",
+  "model": {
+    "name": "RIFE-IFNet",
+    "version": "demo-v0.1.0",
+    "params_m": 9.8
+  }
+}

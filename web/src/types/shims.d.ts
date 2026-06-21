@@ -30,19 +30,38 @@ declare module '@maplibre/maplibre-gl-compare' {
 
 declare module '@maplibre/maplibre-gl-compare/dist/maplibre-gl-compare.css';
 
-/** Optical-flow overlay schema produced by frameflow.flow.visualize. */
+/**
+ * Optical-flow overlay vector. Two on-disk schemas are supported and normalized in
+ * deckLayers.ts (normalizeFlowVectors):
+ *   - mock generator   : { position:[lon,lat], vector:[Δlon,Δlat], speed }
+ *   - real precompute  : { sourcePosition:[lon,lat], targetPosition:[lon,lat], u, v, mag }
+ *     (written by frameflow.viz.flow_overlay.flow_to_overlay_json)
+ */
 interface FlowVector {
-  /** [lon, lat] origin of the vector. */
-  position: [number, number];
-  /** [u, v] displacement in degrees (already scaled for display). */
-  vector: [number, number];
-  /** Speed magnitude (px/frame), used for color/opacity ramping. */
-  speed: number;
+  /** [lon, lat] origin of the vector (mock schema). */
+  position?: [number, number];
+  /** [Δlon, Δlat] displacement in degrees, display-scaled (mock schema). */
+  vector?: [number, number];
+  /** Speed magnitude used for color/opacity ramping (mock schema). */
+  speed?: number;
+  /** [lon, lat] origin (precompute schema). */
+  sourcePosition?: [number, number];
+  /** [lon, lat] tip (precompute schema). */
+  targetPosition?: [number, number];
+  /** Pixel-space components + magnitude (precompute schema). */
+  u?: number;
+  v?: number;
+  mag?: number;
 }
 
 interface FlowOverlay {
-  frame_index: number;
-  /** Display scale already baked into `vector`; informational. */
-  scale: number;
+  /** Present in the mock schema; absent in the precompute schema (defaults to 0). */
+  frame_index?: number;
+  /** Display scale; informational. */
+  scale?: number;
+  /** Layer kind tag emitted by precompute ("LineLayer"); informational. */
+  type?: string;
+  /** [west, south, east, north] geographic extent (precompute schema); informational. */
+  bbox?: number[];
   vectors: FlowVector[];
 }

@@ -142,22 +142,70 @@ export interface FlowLayerOptions {
   exaggeration?: number;
 }
 
+/** Normalized internal flow vector: an origin, a [Δlon, Δlat] displacement, a speed. */
+interface NormFlowVector {
+  position: [number, number];
+  vector: [number, number];
+  speed: number;
+}
+
+/**
+ * Normalize the two flow-overlay schemas the pipeline can emit into one shape:
+ *   - mock (web) : { vectors: [{ position:[lon,lat], vector:[Δlon,Δlat], speed }] }
+ *   - precompute : { bbox, scale, vectors: [{ sourcePosition:[lon,lat],
+ *                    targetPosition:[lon,lat], u, v, mag }] }  (frameflow.viz.flow_overlay)
+ * Both carry geographic endpoints, so we derive position + [Δlon,Δlat] + speed from
+ * whichever fields are present. This keeps the dashboard rendering REAL precomputed
+ * flow as well as the mock without changing the manifest/overlay on disk.
+ */
+function normalizeFlowVectors(overlay: FlowOverlay): NormFlowVector[] {
+  const raw = (overlay?.vectors ?? []) as unknown[];
+  const out: NormFlowVector[] = [];
+  for (const item of raw) {
+    const v = item as Record<string, unknown>;
+    if (Array.isArray(v.position) && Array.isArray(v.vector)) {
+      // Mock schema (already in display form).
+      out.push({
+        position: [Number(v.position[0]), Number(v.position[1])],
+        vector: [Number(v.vector[0]), Number(v.vector[1])],
+        speed: typeof v.speed === 'number' ? v.speed : Math.hypot(Number(v.vector[0]), Number(v.vector[1])),
+      });
+    } else if (Array.isArray(v.sourcePosition) && Array.isArray(v.targetPosition)) {
+      // Precompute schema: derive the [Δlon, Δlat] from the geographic endpoints.
+      const s = v.sourcePosition as number[];
+      const t = v.targetPosition as number[];
+      const dLon = Number(t[0]) - Number(s[0]);
+      const dLat = Number(t[1]) - Number(s[1]);
+      out.push({
+        position: [Number(s[0]), Number(s[1])],
+        vector: [dLon, dLat],
+        speed: typeof v.mag === 'number' ? (v.mag as number) : Math.hypot(dLon, dLat),
+      });
+    }
+  }
+  return out;
+}
+
 /**
  * Optical-flow overlay: motion vectors rendered as a LineLayer (the shaft) plus
  * an IconLayer-free arrowhead approximated with a short second segment. Color
  * ramps by speed using the IR colormap for visual coherence.
+ *
+ * Accepts BOTH the mock overlay schema and the real precompute overlay schema
+ * (see normalizeFlowVectors).
  */
 export function buildFlowLayers(opts: FlowLayerOptions): Layer[] {
   const { overlay, visible, exaggeration = 1 } = opts;
-  if (!overlay || !Array.isArray(overlay.vectors) || overlay.vectors.length === 0) {
+  const vectors = normalizeFlowVectors(overlay);
+  if (vectors.length === 0) {
     return [];
   }
-  const maxSpeed =
-    overlay.vectors.reduce((mx, v) => Math.max(mx, v.speed), 0.0001) || 1;
+  const frameKey = overlay?.frame_index ?? 0;
+  const maxSpeed = vectors.reduce((mx, v) => Math.max(mx, v.speed), 0.0001) || 1;
 
-  const shaft = new LineLayer<FlowVector>({
-    id: `flow-shaft-${overlay.frame_index}`,
-    data: overlay.vectors,
+  const shaft = new LineLayer<NormFlowVector>({
+    id: `flow-shaft-${frameKey}`,
+    data: vectors,
     visible,
     getSourcePosition: (d) => d.position,
     getTargetPosition: (d) => [
@@ -175,9 +223,9 @@ export function buildFlowLayers(opts: FlowLayerOptions): Layer[] {
   });
 
   // Arrowheads as small dot icons at the vector tip (cheap, no external image).
-  const heads = new IconLayer<FlowVector>({
-    id: `flow-heads-${overlay.frame_index}`,
-    data: overlay.vectors,
+  const heads = new IconLayer<NormFlowVector>({
+    id: `flow-heads-${frameKey}`,
+    data: vectors,
     visible,
     getPosition: (d) => [
       d.position[0] + d.vector[0] * exaggeration,

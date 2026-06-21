@@ -132,9 +132,15 @@ export async function loadSceneIndex(signal?: AbortSignal): Promise<SceneIndex> 
     return json;
   } catch (err) {
     if ((err as Error)?.name === 'AbortError') throw err;
-    // Fallback: assume the canonical demo scenes exist.
+    // Fallback: the embedded REAL scene (always git-tracked) first, then the mock
+    // scenes (present only after `npm run mock`).
     return {
       scenes: [
+        {
+          scene_id: 'demo-0001',
+          title: 'GOES-19 · Real IFNet demo (synthetic-trained)',
+          satellite: 'GOES-19',
+        },
         { scene_id: 'cyclone-atlantic', title: 'GOES-19 · Atlantic Cyclone', satellite: 'GOES-19' },
         { scene_id: 'synthetic-demo', title: 'Synthetic · Advecting Blob', satellite: 'FrameFlow-Synthetic' },
       ],
