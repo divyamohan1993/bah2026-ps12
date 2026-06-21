@@ -93,6 +93,14 @@ Sources: https://medium.com/better-programming/how-to-use-texture-arrays-in-webg
 
 This way the *scrub* path is provably O(1) (range GET per frame) and the *play* path is GPU-smooth. Both come off the same CDN.
 
+**Accessibility:** any `<video>` element on the play path must ship a captions track:
+```html
+<video src="clip.mp4" controls>
+  <track kind="captions" srclang="en" label="English" src="captions.vtt" default />
+</video>
+<!-- NOTE: every <video> ships a captions <track> for WCAG 1.2.2. -->
+```
+
 deck.gl animation pattern (authoritative): "the most powerful way to create animations is to manage data/settings externally and update the layers' props on every frame… deck.gl is designed to handle layer updates very efficiently at high frame rate." Keep stable layer `id`s; don't recreate layers. (See §8 code.)
 
 Sources: https://deck.gl/docs/developer-guide/animations-and-transitions , https://deck.gl/docs/api-reference/layers/bitmap-layer , WebCodecs sources above.

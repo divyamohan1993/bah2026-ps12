@@ -298,10 +298,13 @@ python3 -m torch.distributed.launch --nproc_per_node=2 train.py --world_size=2  
 import torch
 net.eval().cuda()
 dummy0 = torch.randn(1,3,512,512, device="cuda")   # or 1-channel if conv1 edited
+dummy_t = torch.full((1,1), 0.5, device="cuda")    # t as (B,1) so it batches with the images
+# NOTE: export t as (B,1) with a dynamic batch axis for Triton dynamic batching. Authoritative impl: frameflow/infer/export.py
 torch.onnx.export(
-    net, (dummy0, dummy0, torch.tensor([0.5], device="cuda")),
+    net, (dummy0, dummy0, dummy_t),
     "vfi.onnx", opset_version=17, input_names=["img0","img1","t"], output_names=["mid"],
-    dynamic_axes={"img0":{0:"B",2:"H",3:"W"}, "img1":{0:"B",2:"H",3:"W"}, "mid":{0:"B",2:"H",3:"W"}},
+    dynamic_axes={"img0":{0:"B",2:"H",3:"W"}, "img1":{0:"B",2:"H",3:"W"},
+                  "t":{0:"B"}, "mid":{0:"B",2:"H",3:"W"}},
 )
 ```
 ```bash

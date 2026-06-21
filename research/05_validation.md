@@ -289,9 +289,16 @@ import piq
 def to_t(x):  # HxW float -> 1x1xHxW torch in [0,1]
     return torch.from_numpy(x[None,None]).float()
 
-def per_frame_metrics(pred, true, data_range, bt_pred_K, bt_true_K):
-    p01 = (pred - pred.min())/(np.ptp(pred)+1e-9)      # for SSIM-family
-    t01 = (true - true.min())/(np.ptp(true)+1e-9)
+# Fixed, shared brightness-temperature range (Kelvin) for ALL frames.
+BT_METRIC_VMIN_K, BT_METRIC_VMAX_K = 180.0, 320.0          # data_range = 140 K
+
+def per_frame_metrics(pred, true, data_range=BT_METRIC_VMAX_K - BT_METRIC_VMIN_K,
+                      bt_pred_K=None, bt_true_K=None):
+    # NOTE: use a FIXED shared range, never per-image min/max (it hides warm/cold bias). Authoritative impl: frameflow/validate/metrics.py
+    def to01(x):  # clip to the fixed physical range, then scale -> [0,1]
+        return (np.clip(x, BT_METRIC_VMIN_K, BT_METRIC_VMAX_K) - BT_METRIC_VMIN_K) / (BT_METRIC_VMAX_K - BT_METRIC_VMIN_K)
+    p01 = to01(pred)      # for SSIM-family (fixed-range, comparable across frames)
+    t01 = to01(true)
     tp, tt = to_t(p01), to_t(t01)
     return {
       # Layer A pixel/structure
