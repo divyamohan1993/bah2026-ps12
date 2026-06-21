@@ -1,0 +1,19 @@
+{
+  "scenes": [
+    {
+      "scene_id": "demo-0001",
+      "title": "GOES-19 \u00b7 Real IFNet demo (synthetic-trained)",
+      "satellite": "GOES-19"
+    },
+    {
+      "scene_id": "cyclone-atlantic",
+      "title": "GOES-19 \u00b7 Atlantic Cyclone",
+      "satellite": "GOES-19"
+    },
+    {
+      "scene_id": "synthetic-demo",
+      "title": "Synthetic \u00b7 Advecting Blob",
+      "satellite": "FrameFlow-Synthetic"
+    }
+  ]
+}

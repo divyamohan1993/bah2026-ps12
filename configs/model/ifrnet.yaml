@@ -1,0 +1,9 @@
+# IFRNet — efficient quality challenger (research/01 §3.1; research/06 §0).
+# Best quality/latency/param trade-off; flow distillation + geometry consistency built in.
+name: ifrnet
+variant: L                    # L (~5M) or S (IFRNet-small, ~2.8M)
+pretrained: ""                # path/URL to IFRNet pretrained weights (transfer learning)
+in_channels: 1
+channel_adapt: avg_conv1      # average pretrained RGB conv1 filters into 1-channel kernel
+arbitrary_t: true
+params_m: 5.0

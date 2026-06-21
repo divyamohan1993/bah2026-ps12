@@ -1,0 +1,90 @@
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+.installed.cfg
+pip-wheel-metadata/
+.Python
+develop-eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# Test / type / lint caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# ---------------------------------------------------------------------------
+# Data artifacts & generated outputs (large / regenerable)
+# Root-anchored so we don't accidentally ignore tracked subdirs like
+# configs/data/ (config files) or any nested source directories.
+# ---------------------------------------------------------------------------
+/data/
+/out/
+/runs/
+/cache/
+*.zarr/
+*.nc
+*.h5
+*.hdf5
+*.npz
+*.beton
+*.tar
+
+# Model checkpoints / exports
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.plan
+*.engine
+
+# Tiles / web raster outputs
+*.pmtiles
+/tiles/
+/pmtiles/
+
+# Experiment tracking
+/wandb/
+/mlruns/
+/lightning_logs/
+/tensorboard/
+events.out.tfevents.*
+
+# ---------------------------------------------------------------------------
+# Node / web dashboard
+# ---------------------------------------------------------------------------
+web/node_modules/
+web/dist/
+web/.vite/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ---------------------------------------------------------------------------
+# OS / editor
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~

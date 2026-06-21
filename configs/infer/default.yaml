@@ -1,0 +1,18 @@
+# Inference / interpolation config (research/06 §1, §3). Matches frameflow.config.InferConfig.
+ckpt: runs/ckpt/best_ssim.ckpt
+model_version: v0.1.0
+interpolation_factor: 2      # 2 -> 30->15 min; 4 -> 7.5 min
+timesteps: [0.5]             # which t in (0,1) to synthesize
+precision: fp16              # fp16/bf16 ONLY — INT8 ruins VFI quality (research/06 §1.4)
+device: cuda
+
+# Export. CODE-REVIEW CORRECTION P2 (ONNX): the timestep input `t` gets a leading BATCH
+# dimension (shape [B,1]) and is included in dynamic_axes so Triton dynamic batching works.
+# Alternative: set Triton max_batch_size=0 and handle batching in the model signature.
+export_onnx: false
+onnx_opset: 17               # 2D grid_sample exports cleanly at opset >= 16
+onnx_path: runs/export/vfi.onnx
+trt_fp16: true
+trt_engine: runs/export/vfi_fp16.plan
+
+out_nc_dir: out/interp_nc    # interpolated frames written as CF .nc (Kelvin)

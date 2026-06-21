@@ -1,0 +1,33 @@
+# Fine-tuning recipe (research/06 §0, §4, §5). Transfer-learn from pretrained weights;
+# converges in hours on one GPU. Matches frameflow.config.TrainConfig.
+epochs: 30
+batch_size: 16
+lr: 1.0e-4
+lr_min: 1.0e-5
+weight_decay: 1.0e-4
+optimizer: adamw
+scheduler: cosine
+precision: bf16-mixed         # BF16 on Ampere+; use 16-mixed on T4/V100
+warmup_epochs: 3             # stage 1: freeze flow encoder, train synthesis head
+grad_accum: 1
+channels_last: true
+compile: false               # torch.compile raises GPU mem ~50%; enable once stable
+seed: 42
+
+# Patch-size curriculum: 256 -> 512 (research/06 §0).
+patch_size_start: 256
+patch_size_final: 512
+
+# Loss weights — Charbonnier + census + MS-SSIM + gradient (+ IFRNet privileged terms).
+# (research/06 §5.3). Omit VGG/LPIPS for single-channel TIR (RGB/ImageNet mismatch).
+loss_charbonnier: 1.0
+loss_census: 0.5
+loss_ms_ssim: 0.25
+loss_gradient: 0.1
+loss_flow_distill: 0.01
+loss_geo_consistency: 0.01
+charbonnier_eps: 1.0e-3
+
+tracker: tensorboard         # tensorboard | wandb | mlflow | none
+out_dir: runs
+ckpt_dir: runs/ckpt

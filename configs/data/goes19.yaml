@@ -1,0 +1,38 @@
+# GOES-19 ABI Channel 13 (10.3 µm) — PRIMARY training source (research/02 §1).
+# Dense 10-min full-disk; anonymous S3 (no auth). Matches frameflow.config.DataConfig.
+satellite: GOES-19
+channel: C13
+source: goes19
+cube_path: data/cubes/goes19_c13.zarr
+demo_nc_dir: data/goes19_nc
+
+# Common analysis grid (lat/lon). Default Indian-domain bbox for INSAT deployment overlap;
+# override for CONUS/Pacific training crops.
+bbox_west_south_east_north: [68.0, 6.0, 98.0, 38.0]
+crs: EPSG:4326
+resolution_deg: 0.04          # ~4 km (downsample 2 km ABI to match INSAT TIR1)
+
+chunks: [8, 512, 512]
+shards: [32, 1024, 1024]
+compressor: blosc-zstd-shuffle
+
+# Standardize per-channel; keep raw Kelvin for BT-RMSE reporting. Real stats -> stats_json.
+norm_mode: fixed_range
+norm_vmin_k: 180.0
+norm_vmax_k: 330.0
+stats_json: norm_stats.json
+
+patch_size: 256
+cadence_min: 10               # GOES-19 full-disk native cadence
+num_workers: 8
+
+train_frac: 0.8
+val_frac: 0.1
+test_frac: 0.1
+
+# Source access hints (consumed by the data.access team; see CONTRACTS.md).
+access:
+  s3_radf_template: "s3://noaa-goes19/ABI-L1b-RadF/{year}/{doy:03d}/{hour:02d}/"
+  s3_cmipf_template: "s3://noaa-goes19/ABI-L2-CMIPF/{year}/{doy:03d}/{hour:02d}/"
+  prefer_product: ABI-L2-CMIPF   # CMI is Kelvin-ready (no Planck conversion)
+  anonymous: true

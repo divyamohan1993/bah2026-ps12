@@ -1,0 +1,118 @@
+name: CI
+
+# Two independent jobs on ubuntu-latest:
+#   python — lint (ruff) + the full offline test suite (pytest) on CPU
+#   web    — typecheck + Vite production build of the dashboard
+#
+# Everything runs WITHOUT network access to satellite data: the data-access tests
+# only build URL strings / use synthetic fixtures, and the serving tests use an
+# in-process FastAPI TestClient. See README / CONTRACTS.md.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Python: ruff + pytest (CPU-only torch, all heavy stacks, no network)
+  # ---------------------------------------------------------------------------
+  python:
+    name: python (lint + tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      # Cap BLAS/OMP/torch thread pools so CI never oversubscribes the runner CPU.
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
+      OPENBLAS_NUM_THREADS: "2"
+      NUMEXPR_NUM_THREADS: "2"
+      PYTORCH_NUM_THREADS: "2"
+      # Keep pip from trying to manage an externally-managed base interpreter; the
+      # actions/setup-python interpreter below is a clean, pip-friendly venv anyway.
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PIP_NO_INPUT: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Upgrade pip tooling
+        run: python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install PyTorch (CPU wheels)
+        # CPU-only build from the official CPU index keeps the runner light and
+        # avoids pulling CUDA. Pin the matching torchvision from the same index.
+        run: |
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu \
+            torch torchvision
+
+      - name: Install project dependencies
+        # Mirror the locally-verified stack. torch is already installed above; PyPI
+        # deps below resolve against it. opencv-headless avoids GUI libs on CI.
+        run: |
+          python -m pip install \
+            "pytorch-lightning>=2.1" "torchmetrics>=1.2" "piq>=0.8" \
+            "hydra-core>=1.3" "omegaconf>=2.3" \
+            "numpy>=1.24" "xarray>=2024.1" "zarr>=3" "netCDF4>=1.6" "h5netcdf>=1.2" \
+            "h5py>=3.8" "scipy>=1.10" "dask>=2024.1" \
+            "s3fs>=2024.2" "fsspec>=2024.2" "pyresample>=1.27" "pyproj>=3.6" \
+            "rasterio>=1.3" "rioxarray>=0.15" "kerchunk>=0.2" \
+            "matplotlib>=3.7" "imageio>=2.31" "imageio-ffmpeg>=0.4" "pillow>=10.0" \
+            "fastapi>=0.110" "uvicorn>=0.27" "httpx>=0.27" \
+            "opencv-python-headless>=4.8" \
+            "typer>=0.9" "pyyaml>=6.0" "tqdm>=4.65" \
+            "ruff>=0.5" "pytest>=7.4" "pytest-timeout>=2.1"
+
+      - name: Install FrameFlow (no deps; deps installed above)
+        run: python -m pip install -e . --no-deps
+
+      - name: Ruff lint
+        run: ruff check frameflow scripts tests
+
+      - name: Pytest (offline, CPU, thread-capped)
+        # -p no:cacheprovider keeps the runner FS clean; --durations surfaces slow tests.
+        run: python -m pytest -q -p no:cacheprovider --durations=10 --timeout=600 tests
+        env:
+          PYTHONUNBUFFERED: "1"
+
+  # ---------------------------------------------------------------------------
+  # Web: typecheck + Vite production build of the dashboard
+  # ---------------------------------------------------------------------------
+  web:
+    name: web (build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies (npm ci)
+        run: npm ci
+
+      - name: Build (tsc + vite)
+        run: npm run build

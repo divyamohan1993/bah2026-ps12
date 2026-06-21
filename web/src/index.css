@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Base / reset
+--------------------------------------------------------------------------- */
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-space-900 text-ink antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    overflow: hidden;
+  }
+
+  ::selection {
+    background: rgba(34, 211, 238, 0.25);
+  }
+
+  /* Thin custom scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #283447 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #283447;
+    border-radius: 8px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #34425a;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Utilities
+--------------------------------------------------------------------------- */
+@layer utilities {
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Range input — cyan instrument slider */
+@layer components {
+  .ff-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 9999px;
+    background: #283447;
+    outline: none;
+  }
+  .ff-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: #22d3ee;
+    border: 2px solid #0a0e14;
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+    cursor: pointer;
+  }
+  .ff-range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    background: #22d3ee;
+    border: 2px solid #0a0e14;
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+    cursor: pointer;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   MapLibre overrides — dark theme
+--------------------------------------------------------------------------- */
+.maplibregl-map {
+  font-family: inherit;
+}
+.maplibregl-ctrl-attrib {
+  background: rgba(10, 14, 20, 0.6) !important;
+  color: #5b6779 !important;
+  font-size: 10px !important;
+  border-radius: 6px 0 0 0 !important;
+}
+.maplibregl-ctrl-attrib a {
+  color: #9aa7ba !important;
+}
+.maplibregl-ctrl-group {
+  background: rgba(17, 24, 38, 0.85) !important;
+  border: 1px solid #1e2a3d !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+.maplibregl-ctrl-group button {
+  background: transparent !important;
+}
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid #1e2a3d !important;
+}
+.maplibregl-ctrl-group button span {
+  filter: invert(0.85) hue-rotate(180deg) brightness(1.1);
+}
+
+/* maplibre-gl-compare swipe handle — cyan instrument look */
+.maplibregl-compare {
+  background-color: rgba(34, 211, 238, 0.35);
+  width: 2px;
+}
+.maplibregl-compare .compare-swiper-vertical,
+.maplibregl-compare .compare-swiper {
+  background-color: #0a0e14;
+  border: 2px solid #22d3ee;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.15), 0 6px 20px -4px rgba(0, 0, 0, 0.8);
+  width: 38px;
+  height: 38px;
+  margin-left: -19px;
+  margin-top: -19px;
+}
+
+/* ---------------------------------------------------------------------------
+   uPlot overrides — dark theme
+--------------------------------------------------------------------------- */
+.uplot,
+.uplot * {
+  font-family:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+}
+.u-axis {
+  color: #5b6779;
+}
+.u-legend {
+  color: #9aa7ba;
+  font-size: 11px !important;
+}
+.u-legend .u-marker {
+  border-radius: 2px;
+}
+.u-legend .u-value {
+  color: #e6edf6;
+}
+.u-select {
+  background: rgba(34, 211, 238, 0.08);
+}
+.u-cursor-x,
+.u-cursor-y {
+  border-color: rgba(34, 211, 238, 0.5) !important;
+}
+.u-cursor-pt {
+  border-color: #22d3ee !important;
+}
